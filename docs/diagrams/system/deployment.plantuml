@@ -14,28 +14,23 @@ skinparam linetype ortho
 
 skinparam rectangle {
   BorderThickness 2
-  RoundCorner 12
+  RoundCorner 10
   BorderColor #3b82f6
-  BackgroundColor #eff6ff
+  BackgroundColor #dbeafe
   FontColor #1e293b
 }
 
 skinparam database {
   BorderColor #16a34a
-  BackgroundColor #f0fdf4
+  BackgroundColor #dcfce7
   FontColor #14532d
-}
-
-skinparam frame {
-  BorderColor #64748b
-  BackgroundColor #f8fafc
-  FontColor #1e293b
 }
 
 skinparam node {
   BorderColor #64748b
   BackgroundColor #f1f5f9
   FontColor #1e293b
+  RoundCorner 10
 }
 
 title
@@ -44,17 +39,16 @@ title
   <size:11><color:#64748b>C4 Model - Deployment View</color></size>
 end title
 
+' =============================================
+' CLOUD PROVIDERS
+' =============================================
 
-cloud "GitHub Pages" as githubPages {
+cloud "Cloudflare" as cloudflare {
   rectangle "**Landing Page**\nStatic website" as landingPage
+  rectangle "**Web Application**\nStatic file server" as webApplication
 }
 
 frame "Google Firebase" as firebase {
-  node "Firebase Hosting" as firebaseHosting {
-    rectangle "**Web Application**\nStatic file server" as webApplication
-    rectangle "**Veyra Web Client**\nAngular SPA" as webClientApp
-  }
-
   node "Firebase App Distribution" as firebaseDistribution {
     rectangle "**Veyra Mobile App**\nFlutter / Dart" as mobileApp
   }
@@ -71,30 +65,48 @@ frame "Microsoft Azure" as azure {
   }
 }
 
+' =============================================
+' NURSING HOME ENVIRONMENT
+' =============================================
+
 frame "Nursing Home Environment" as nursingHome {
   node "Edge Server" as edgeServer {
     rectangle "**Veyra Edge Application**\nReal-time processing" as edgeApp
   }
 
   node "Vital Signs IoT Device" as vitalDevice {
-    rectangle "**Vital Signs Embedded App**\nFirmware" as embeddedVital
+    rectangle "**Vital Signs Embedded App**\nC++ Firmware" as embeddedVital
   }
 
   node "GPS Tracker Device" as gpsDevice {
-    rectangle "**GPS Embedded App**\nFirmware" as embeddedGPS
+    rectangle "**GPS Embedded App**\nC++ Firmware" as embeddedGPS
   }
 }
 
+' =============================================
+' CLIENT SIDE - SIGUIENDO EXACTAMENTE EL ESTILO DE SIMON BROWN
+' =============================================
+
+node "User Device" as userDevice {
+  node "Web Browser" as webBrowser {
+    rectangle "**Veyra Web Client**\nAngular SPA" as webClientApp
+  }
+}
+
+' =============================================
+' RELACIONES
+' =============================================
 
 landingPage -down-> webApplication : Delivers static content
 
-webApplication -down-> webClientApp : Serves SPA bundle
+webApplication -down-> webBrowser : Delivers SPA bundle\n(HTTPS)
 
-webClientApp -right-> monolithBackend : Invokes REST API
-mobileApp -right-> monolithBackend : Invokes REST API
+webClientApp -right-> monolithBackend : Makes API requests\n(HTTPS / JSON)
 
-monolithBackend -down-> mysqlDB : Persists relational data
-monolithBackend -down-> mongoDB : Persists telemetry
+mobileApp -right-> monolithBackend : Makes API requests\n(HTTPS / JSON)
+
+monolithBackend -down-> mysqlDB : Reads from and writes to
+monolithBackend -down-> mongoDB : Reads from and writes to
 
 embeddedVital -up-> edgeApp : Streams raw vital signs
 embeddedGPS -up-> edgeApp : Streams raw GPS data
