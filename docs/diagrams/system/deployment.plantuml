@@ -1,117 +1,104 @@
 @startuml Veyra_Platform_Deployment
 
-skinparam BackgroundColor           #ffffff
-skinparam CanvasBorderColor         #ffffff
-skinparam ArrowColor                #334155
-skinparam ArrowFontColor            #475569
-skinparam ArrowFontSize             10
-skinparam ArrowThickness            1.5
-skinparam ArrowFontStyle            italic
-skinparam DefaultFontName           "Segoe UI"
-skinparam DefaultFontSize           12
-skinparam DefaultFontColor          #1e293b
-skinparam Shadowing                 false
-skinparam linetype                  ortho
+skinparam BackgroundColor #ffffff
+skinparam CanvasBorderColor #ffffff
+skinparam ArrowColor #334155
+skinparam ArrowFontColor #475569
+skinparam ArrowFontSize 10
+skinparam ArrowThickness 1.5
+skinparam DefaultFontName "Segoe UI"
+skinparam DefaultFontSize 12
+skinparam DefaultFontColor #1e293b
+skinparam Shadowing false
+skinparam linetype ortho
 
 skinparam rectangle {
-  BorderThickness  2
-  RoundCorner      10
-  BorderColor      #3b82f6
-  BackgroundColor  #dbeafe
-  FontColor        #1e293b
+  BorderThickness 2
+  RoundCorner 12
+  BorderColor #3b82f6
+  BackgroundColor #eff6ff
+  FontColor #1e293b
 }
 
 skinparam database {
-  BorderColor      #16a34a
-  BackgroundColor  #dcfce7
-  FontColor        #14532d
+  BorderColor #16a34a
+  BackgroundColor #f0fdf4
+  FontColor #14532d
 }
 
 skinparam frame {
-  BorderColor      #94a3b8
-  BackgroundColor  #f1f5f9
-  FontColor        #1e293b
+  BorderColor #64748b
+  BackgroundColor #f8fafc
+  FontColor #1e293b
 }
 
-skinparam note {
-  BorderColor      #cbd5e1
-  BackgroundColor  #f8fafc
-  FontColor        #475569
-  FontSize         10
+skinparam node {
+  BorderColor #64748b
+  BackgroundColor #f1f5f9
+  FontColor #1e293b
 }
 
 title
-<size:22><b><color:#1e293b>Veyra Platform</color></b></size>
-<size:13><color:#3b82f6>Production Deployment Architecture</color></size>
-<size:10><color:#94a3b8>C4 Model - Deployment View</color></size>
+  <size:22><b>Veyra Platform</b></size>
+  <size:14><color:#3b82f6>Production Deployment Architecture</color></size>
+  <size:11><color:#64748b>C4 Model - Deployment View</color></size>
 end title
 
-' ── GITHUB PAGES ──────────────────────────────────────────────────
-frame "GitHub Pages - Static Hosting" as githubPages {
-  rectangle "**Landing Page**\nHTML, CSS, JavaScript\nPublic website and registration" as landingPage
+
+cloud "GitHub Pages" as githubPages {
+  rectangle "**Landing Page**\nStatic website" as landingPage
 }
 
-' ── GOOGLE FIREBASE ───────────────────────────────────────────────
-frame "Google Firebase - Web and Mobile Platform" as firebase {
-
-  frame "Firebase Hosting - Web Hosting" as firebaseHosting {
-    rectangle "**Web Application**\nNginx\nDelivers Angular SPA to browser" as webApplication
-    rectangle "**Veyra Web Client App**\nTypeScript, Angular\nUsed by doctors, nurses, admins, relatives" as webClientApp
+frame "Google Firebase" as firebase {
+  node "Firebase Hosting" as firebaseHosting {
+    rectangle "**Web Application**\nStatic file server" as webApplication
+    rectangle "**Veyra Web Client**\nAngular SPA" as webClientApp
   }
 
-  frame "Firebase App Distribution - Mobile Delivery" as firebaseDistribution {
-    rectangle "**Veyra Mobile App**\nFlutter, Dart\nReal-time resident monitoring" as mobileApp
-  }
-}
-
-' ── MICROSOFT AZURE ───────────────────────────────────────────────
-frame "Microsoft Azure - Cloud Platform" as azure {
-
-  frame "Azure Region - East US" as azureRegion {
-
-    frame "Azure App Service - Backend Hosting" as azureAppService {
-      rectangle "**Veyra API Application**\nJava, Spring Boot\nREST API and Business Logic" as monolithBackend
-    }
-
-    frame "Azure Database for MySQL" as azureMySQL {
-      database "**MySQL Database**\nMySQL 8.0\nUsers, residents, care records, subscriptions" as mysqlDB
-    }
-
-    frame "Azure Cosmos DB - Document Database" as azureCosmos {
-      database "**MongoDB Database**\nMongoDB API\nIoT telemetry, vital signs, GPS history" as mongoDB
-    }
+  node "Firebase App Distribution" as firebaseDistribution {
+    rectangle "**Veyra Mobile App**\nFlutter / Dart" as mobileApp
   }
 }
 
-' ── ON-PREMISES ───────────────────────────────────────────────────
-frame "On-Premises - Nursing Home" as onPremises {
-
-  frame "Edge Server - Raspberry Pi 5, Ubuntu 24.04" as edgeServer {
-    rectangle "**Vital Signs Edge App**\nPython\nProcesses vital signs locally" as edgeApp
-    rectangle "**GPS Edge App**\nPython\nProcesses GPS telemetry locally" as edgeAppB
+frame "Microsoft Azure" as azure {
+  node "Azure App Service" as azureAppService {
+    rectangle "**Veyra API Application**\nMonolithic backend" as monolithBackend
   }
 
-  frame "Vital Signs IoT Device - Embedded Hardware" as iotVital {
-    rectangle "**Vital Signs Embedded App**\nC++\nAcquires raw vital signs from sensors" as embeddedApp
-  }
-
-  frame "GPS Tracker Device - Embedded Hardware" as iotGPS {
-    rectangle "**GPS Embedded App**\nC++\nAcquires raw location from GPS hardware" as embeddedAppB
+  node "Azure Database Services" as azureDatabases {
+    database "**MySQL Database**\nRelational data" as mysqlDB
+    database "**MongoDB Database**\nIoT telemetry & events" as mongoDB
   }
 }
 
-' ── RELATIONSHIPS ─────────────────────────────────────────────────
-landingPage     -down->  webApplication  : Delegates SPA bundle delivery\n**HTTP**
-webApplication  -down->  webClientApp    : Delivers SPA bundle to browser\n**HTTP**
-webClientApp    -down->  monolithBackend : Invokes REST API endpoints\n**HTTPS, JWT**
-mobileApp       -down->  monolithBackend : Invokes REST API endpoints\n**HTTPS, JWT**
-monolithBackend -right-> mysqlDB         : Persists and queries relational data\n**JDBC, JPA**
-monolithBackend -right-> mongoDB         : Persists and queries IoT telemetry\n**MongoDB Driver**
-embeddedApp     -up->    edgeApp         : Streams raw vital signs data\n**Local TCP**
-embeddedAppB    -up->    edgeAppB        : Streams raw GPS data\n**Local TCP**
-edgeApp         -up->    monolithBackend : Forwards vital signs and alerts\n**HTTPS, mTLS**
-edgeAppB        -up->    monolithBackend : Forwards GPS data and geofence events\n**HTTPS, mTLS**
-webClientApp    -down->  edgeApp         : Issues vital signs monitoring commands\n**HTTPS, JWT**
-webClientApp    -down->  edgeAppB        : Issues GPS tracking commands\n**HTTPS, JWT**
+frame "Nursing Home Environment" as nursingHome {
+  node "Edge Server" as edgeServer {
+    rectangle "**Veyra Edge Application**\nReal-time processing" as edgeApp
+  }
+
+  node "Vital Signs IoT Device" as vitalDevice {
+    rectangle "**Vital Signs Embedded App**\nFirmware" as embeddedVital
+  }
+
+  node "GPS Tracker Device" as gpsDevice {
+    rectangle "**GPS Embedded App**\nFirmware" as embeddedGPS
+  }
+}
+
+
+landingPage -down-> webApplication : Delivers static content
+
+webApplication -down-> webClientApp : Serves SPA bundle
+
+webClientApp -right-> monolithBackend : Invokes REST API
+mobileApp -right-> monolithBackend : Invokes REST API
+
+monolithBackend -down-> mysqlDB : Persists relational data
+monolithBackend -down-> mongoDB : Persists telemetry
+
+embeddedVital -up-> edgeApp : Streams raw vital signs
+embeddedGPS -up-> edgeApp : Streams raw GPS data
+
+edgeApp -up-> monolithBackend : Forwards processed data & alerts
 
 @enduml
