@@ -8,20 +8,22 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
 
             landingPage = container "Landing Page" \
                 "Static marketing website delivered to visitors." \
-                "HTML / CSS / JavaScript"
+                "HTML / CSS / JavaScript" "Directory"
 
             webApp = container "Web Application" \
                 "Delivers the Veyra Angular SPA to the user's web browser." \
-                "Static File Server"
+                "Static File Server" 
 
             webClient = container "Veyra Web Client" \
-                "Angular single-page application used by nursing staff and administrators to monitor patients." \
-                "Angular SPA"
-
+                "Angular single-page application used by nursing staff and administrators to monitor residents." \
+                "Angular SPA" "Browser"
+                
+           sqlDatabase = container "SQL Databaase"\ "Persisten data" "Database"
+           
             mobileApp = container "Veyra Mobile App" \
                 "Mobile application for nursing staff to monitor patients on the go." \
-                "Flutter / Dart"
-
+                "Flutter / Dart"  "MobileApp"
+ 
             api = container "Veyra API Application" \
                 "Monolithic backend that provides all business logic and REST API services to clients." \
                 "Monolithic Backend"
@@ -49,6 +51,8 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
             embeddedGPS = container "GPS Embedded App" \
                 "Firmware running on the GPS tracker device. Collects and transmits patient location data." \
                 "C++ Firmware"
+                
+            landingPage -> webApp  "HTTPS"
 
             webApp        -> webClient  "Delivers SPA bundle to"                "HTTPS"
             webClient     -> api        "Makes API requests to"                 "HTTPS / JSON"
@@ -58,6 +62,7 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
             embeddedVital -> edgeApp    "Streams raw vital-sign data to"        "MQTT / TCP"
             embeddedGPS   -> edgeApp    "Streams raw GPS location data to"      "MQTT / TCP"
             edgeApp       -> api        "Forwards processed data and alerts to" "HTTPS / JSON"
+            mobileApp -> sqlDatabase "HTTPS/JSON"
         }
 
         deploymentEnvironment "Production" {
@@ -82,7 +87,10 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
 
                     deploymentNode "Firebase App Distribution" "" "App Distribution Service" {
                         containerInstance veyra.mobileApp
+                        
+                        containerInstance veyra.sqlDatabase
                     }
+                    
                 }
 
                 deploymentNode "User Device" "" "Microsoft Windows, macOS, or Linux" {
@@ -158,7 +166,20 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
                 shape Cylinder
                 border solid
             }
-
+ 
+             element "MobileApp" {
+        shape MobileDeviceLandscape
+        background "#fefce8"
+        color "#92400e"
+        stroke "#92400e"
+      }
+       element "Browser" {
+        shape WebBrowser
+        background "#f0fdf4"
+        color "#0f766e"
+        stroke "#0f766e"
+      }
+            
             element "Infrastructure Node" {
                 background #85bbf0
                 color #000000
@@ -221,6 +242,13 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
                 fontSize 10
                 thickness 2
             }
+             element "Directory" {
+        background #FFFFFF
+        color #1565C0
+        stroke #1565C0
+        strokeWidth 3
+        shape Folder
+    }
         }
     }
 }
