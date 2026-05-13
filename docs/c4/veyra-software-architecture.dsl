@@ -11,13 +11,13 @@ workspace "Veyra Platform" "IoT-based healthcare monitoring platform for nursing
     googleMaps         = softwareSystem "Google Maps"                 "Provides reverse geocoding and map tile rendering for geofence boundary visualization."                            "External"
     vitalSignsHardware = softwareSystem "Vital Signs Sensor Hardware" "IoT wearable that continuously measures heart rate, SpO2, temperature, and blood pressure."                       "External, Hardware"
     gpsHardware        = softwareSystem "GPS Tracker Hardware"        "GPS wearable that acquires real-time location fixes and transmits raw telemetry."                                  "External, Hardware"
-    twilio             = softwareSystem "Twilio"                      "Delivers outbound SMS and email notifications to doctors, staff, administrators, and relatives."                   "External"
-
+sendGrid          = softwareSystem "SendGrid"                   "Handles transactional email delivery including welcome emails, account notifications, alerts, password recovery, reports, and communication messages for doctors, staff, administrators, and relatives."                   "External"
     veyraPlatform = softwareSystem "Veyra Platform" "IoT-based healthcare monitoring platform for nursing homes." {
       nginx    = container "Proxy nginx"      "Reverse proxy that routes external requests to the backend application."
       mysqlDB  = container "MySQL Database"   "Relational store for structured domain data: users, residents, care records, staff, roles, subscriptions, and payments."  "MySQL 8"   "Database"
       mongoDB  = container "MongoDB Database" "Document and time-series store for high-frequency IoT data: vital signs, GPS history, geofence events, and audit logs."   "MongoDB 7" "Database"
-
+      SQLSERVER = container "SQL Server Database" "Local relational store for buffering, processing, and caching high-frequency IoT telemetry at the edge." "Microsoft SQL Server" "Database"
+      SQLite = container "SQLite" "Perseveration information in mobile" "SQLite" "Database"
       embeddedApp = container "Vital Signs Embedded Application" "Wearable firmware that acquires biometric sensor readings and streams telemetry to the Edge Application." "C++" "IoT" {
         deviceController = component "Device Controller" "Initializes onboard sensors, manages acquisition cycles (heart rate, SpO2, temperature, blood pressure), and forwards structured telemetry to the Edge Application." "C++"
       }
@@ -76,7 +76,7 @@ workspace "Veyra Platform" "IoT-based healthcare monitoring platform for nursing
         subscriptionBC = component "Subscription and Payments Bounded Context" \
           "Owns SubscriptionPlan (tier, features, seats, billing interval) and PaymentTransaction (amount, status, Stripe reference) aggregates. Integrates with Stripe for payment lifecycle. Publishes SubscriptionActivatedEvent, PaymentFailedEvent, and PlanRenewalEvent." \
           "Spring Boot Package"
-
+         
         iamBC           -> sharedBC "Consumes value objects, domain event base classes, audit logging, and exception hierarchy"
         profileBC       -> sharedBC "Consumes UserId, ResidentId value objects and audit logging"
         healthBC        -> sharedBC "Consumes ResidentId, HealthAlertEvent base class, and audit logging"
@@ -119,8 +119,8 @@ workspace "Veyra Platform" "IoT-based healthcare monitoring platform for nursing
         healthBC        -> mysqlDB "Persists per-resident threshold configurations and health alert metadata"                     "JDBC/JPA"
         healthBC        -> mongoDB "Persists vital signs time-series (heart rate, SpO2, temperature, blood pressure)"            "MongoDB Driver"
         trackingBC      -> mongoDB "Persists GPS location history, geofence definitions, and breach event records"               "MongoDB Driver"
-
-        communicationBC -> twilio     "Dispatches SMS and email for health alerts, geofence breaches, onboarding, and billing events" "REST API"
+        edgeApp -> SQLSERVER "Persiste información de la aplicación perimetral" "JDBC/TLS"
+        communicationBC -> sendGrid     "Dispatches SMS and email for health alerts, geofence breaches, onboarding, and billing events" "REST API"
         subscriptionBC  -> stripe     "Creates payment intents, confirms transactions, and processes billing webhooks"                "REST API"
         profileBC       -> cloudinary "Uploads and retrieves avatar images via CDN"                                                   "REST API"
         trackingBC      -> googleMaps "Resolves GPS coordinates to addresses and retrieves map tiles for geofence visualization"       "REST API"
@@ -182,7 +182,7 @@ workspace "Veyra Platform" "IoT-based healthcare monitoring platform for nursing
       webClientApp   -> iamBC             "Submits credentials and refresh tokens to obtain JWT session tokens" "REST/HTTPS"
       mobileApp      -> iamBC             "Submits credentials and refresh tokens to obtain JWT session tokens" "REST/HTTPS"
       nginx          -> monolithBackend   "Proxies API requests to the monolithic backend application" "HTTP"
-
+       mobileApp -> SQLite "Persists local application data and cache" "SQLite API / Local Storage"
       wAuthBC          -> monolithBackend "POST /auth/login, /auth/refresh — JWT token acquisition and renewal"                              "REST/HTTPS"
       wProfileBC       -> monolithBackend "GET/PUT /profiles — reads and updates user and nursing home profile data"                         "REST/HTTPS"
       wHealthBC        -> monolithBackend "GET /health/vitals, /alerts, /thresholds — vital signs, alert history, and threshold config"      "REST/HTTPS"

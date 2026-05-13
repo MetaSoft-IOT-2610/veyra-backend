@@ -8,7 +8,8 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
 
             landingPage = container "Landing Page" \
                 "Static marketing website delivered to visitors." \
-                "HTML / CSS / JavaScript"
+                "HTML / CSS / JavaScript"                  "LandingPage"
+
 
             webApp = container "Web Application" \
                 "Delivers the Veyra Angular SPA to the user's web browser." \
@@ -16,11 +17,11 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
 
             webClient = container "Veyra Web Client" \
                 "Angular single-page application used by nursing staff and administrators to monitor patients." \
-                "Angular SPA"
+                "Angular SPA"   "WebFrontend"
 
             mobileApp = container "Veyra Mobile App" \
                 "Mobile application for nursing staff to monitor patients on the go." \
-                "Flutter / Dart"
+                "Flutter / Dart" "MobileApp"
 
             api = container "Veyra API Application" \
                 "Monolithic backend that provides all business logic and REST API services to clients." \
@@ -31,16 +32,27 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
                 "MySQL" {
                 tags "Database"
             }
-
             mongoDb = container "MongoDB Database" \
                 "Stores IoT telemetry data, vital-sign time series, and event streams." \
                 "MongoDB" {
                 tags "Database"
             }
+            
+          sqliteDb = container "SQLite Database" \
+    "Local embedded database used by the mobile application for offline-first data persistence and caching." \
+    "SQLite" {
+    tags "Database"
+}
 
-            edgeApp = container "Veyra Edge Application" \
+sqlServerDb = container "SQL Server Database" \
+    "On-premises relational database used for edge/local processing, testing scenarios, or temporary data storage." \
+    "Microsoft SQL Server" {
+    tags "Database"
+}  
+
+edgeApp = container "Veyra Edge Application" \
                 "Processes and filters raw sensor data in real time at the nursing home edge before forwarding alerts." \
-                "Node.js / Real-time Processing"
+                "python"
 
             embeddedVital = container "Vital Signs Embedded App" \
                 "Firmware running on the vital-signs monitoring device. Collects heart rate, SpO2, temperature, and blood pressure." \
@@ -58,6 +70,12 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
             embeddedVital -> edgeApp    "Streams raw vital-sign data to"        "MQTT / TCP"
             embeddedGPS   -> edgeApp    "Streams raw GPS location data to"      "MQTT / TCP"
             edgeApp       -> api        "Forwards processed data and alerts to" "HTTPS / JSON"
+            landingPage -> webApp "Requests and retrieves SPA static assets" "HTTPS"
+
+
+mobileApp -> sqliteDb "Reads from and writes to local offline storage" "SQLite"
+
+edgeApp -> sqlServerDb "Persists and queries local edge data" "TCP / TDS"
         }
 
         deploymentEnvironment "Production" {
@@ -82,7 +100,9 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
 
                     deploymentNode "Firebase App Distribution" "" "App Distribution Service" {
                         containerInstance veyra.mobileApp
+                        containerInstance  veyra.sqliteDb
                     }
+                    
                 }
 
                 deploymentNode "User Device" "" "Microsoft Windows, macOS, or Linux" {
@@ -112,6 +132,8 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
                         deploymentNode "Azure Cosmos DB (MongoDB API)" "" "Managed NoSQL Service - Serverless" {
                             mongoInstance = containerInstance veyra.mongoDb
                         }
+                        
+                     
                     }
                 }
 
@@ -128,6 +150,9 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
 
                     deploymentNode "GPS Tracker Device" "" "Embedded Hardware - ARM Cortex-M" {
                         containerInstance veyra.embeddedGPS
+                    }
+                    deploymentNode "SQLSERVER " "" "Local" {
+                        containerInstance veyra.sqlServerDb 
                     }
                 }
             }
@@ -207,7 +232,7 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
                 color #14532d
                 border dashed
             }
-
+            
             element "UserDevice" {
                 background #faf5ff
                 stroke #9333ea
@@ -221,6 +246,39 @@ workspace "Veyra Platform" "Production deployment architecture for the Veyra IoT
                 fontSize 10
                 thickness 2
             }
+            
+                 element "LandingPage" {
+                shape Folder
+                background #6d28d9
+                color #ffffff
+                stroke #4c1d95
+            }
+            
+              element "WebFrontend" {
+                shape WebBrowser
+                background #6d28d9
+                color #ffffff
+                stroke #4c1d95
+            }
+            element "Browser" {
+                shape WebBrowser
+                background #0f766e
+                color #ffffff
+                stroke #134e4a
+            }
+            element "MobileApp" {
+                shape MobileDeviceLandscape
+                background #92400e
+                color #ffffff
+                stroke #78350f
+            }
+                  element "MessageBroker" {
+        shape Pipe
+        background "#fef3c7"
+        color "#92400e"
+        stroke "#d97706"
+      }
+
         }
     }
 }
