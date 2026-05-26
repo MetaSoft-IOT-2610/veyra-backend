@@ -1,6 +1,5 @@
 package com.novaperutech.veyra.platform.activities.application.internal.commandservices;
 
-import com.novaperutech.veyra.platform.activities.application.internal.outboundservices.acl.ActivityExternalServices;
 import com.novaperutech.veyra.platform.activities.domain.model.aggregates.Activity;
 import com.novaperutech.veyra.platform.activities.domain.model.commands.CompleteActivityCommand;
 import com.novaperutech.veyra.platform.activities.domain.model.commands.CreateActivityCommand;
@@ -12,24 +11,14 @@ import org.springframework.stereotype.Service;
 public class ActivityCommandServiceImpl implements ActivityCommandService {
 
     private final ActivityRepository activityRepository;
-    private final ActivityExternalServices externalServices;
 
-    public ActivityCommandServiceImpl(ActivityRepository activityRepository, ActivityExternalServices externalServices) {
+    public ActivityCommandServiceImpl(ActivityRepository activityRepository) {
         this.activityRepository = activityRepository;
-        this.externalServices = externalServices;
     }
 
     @Override
     public Long handle(CreateActivityCommand command) {
-        if (!externalServices.residentExists(command.residentId())) {
-            throw new IllegalArgumentException("Resident with ID " + command.residentId() + " does not exist.");
-        }
-        if (!externalServices.staffExists(command.staffMemberId())) {
-            throw new IllegalArgumentException("Staff member (Attendant) with ID " + command.staffMemberId() + " does not exist.");
-        }
-
         var activity = new Activity(command);
-
         activityRepository.save(activity);
         return activity.getId();
     }

@@ -1,22 +1,16 @@
 package com.novaperutech.veyra.platform.activities.interfaces.rest.transform;
 
 import com.novaperutech.veyra.platform.activities.domain.model.commands.CreateActivityCommand;
+import com.novaperutech.veyra.platform.activities.domain.model.valueobjects.ActivityType;
 import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.CreateActivityResource;
 
 public class CreateActivityCommandFromResourceAssembler {
 
-    public static CreateActivityCommand toCommandFromResource(
-            CreateActivityResource resource,
-            Long nursingHomeId) {
+    public static CreateActivityCommand toCommandFromResource(CreateActivityResource resource) {
         return new CreateActivityCommand(
-                resource.name(),
-                resource.activityDate(),
-                resource.startTime(),
-                resource.endTime(),
-                resource.area(),
-                nursingHomeId,
                 resource.residentId(),
-                resource.attendantId()
+                resource.healthcareStaffId(),
+                ActivityType.valueOf(resource.type())
         );
     }
 }

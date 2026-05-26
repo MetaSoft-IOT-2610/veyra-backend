@@ -1,7 +1,7 @@
 package com.novaperutech.veyra.platform.activities.domain.model.valueobjects;
 
-public enum ActivityStatus {
-    PENDING,
-    IN_PROGRESS,
-    COMPLETED
+public enum ActivityType {
+    MEAL,
+    BATH,
+    RISK_PROFILE
 }

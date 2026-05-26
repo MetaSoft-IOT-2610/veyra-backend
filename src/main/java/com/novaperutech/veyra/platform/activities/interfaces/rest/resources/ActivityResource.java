@@ -1,11 +1,9 @@
 package com.novaperutech.veyra.platform.activities.interfaces.rest.resources;
 
 public record ActivityResource(
-        Long activityId,
-        String hour,
-        String attendantName,
-        String activityName,
-        String areaToDevelop,
+        Long id,
+        Long residentId,
+        Long healthcareStaffId,
+        String type,
         String status
 ) {}
-
