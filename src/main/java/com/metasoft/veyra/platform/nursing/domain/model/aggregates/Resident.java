@@ -47,7 +47,7 @@ public class Resident extends AuditableAbstractAggregateRoot<Resident> {
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "relative_id")
     private Relative relative;
 
