@@ -13,6 +13,7 @@ import java.time.LocalDate;
 public class Resident extends AuditableAbstractAggregateRoot<Resident> {
     protected Resident() {
         super(); this.relative=null;
+
     }
 
     @Embedded
@@ -213,6 +214,6 @@ public class Resident extends AuditableAbstractAggregateRoot<Resident> {
         this.staffMemberId=new StaffMemberId(staffMemberId);
     }
 public void assignedRelativeToResidentCommand(Relative relative){
-
+ this.relative= relative;
 }
 }
