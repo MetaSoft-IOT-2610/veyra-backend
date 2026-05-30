@@ -193,67 +193,68 @@ public class StripeServiceImpl implements StripeService {
             throw new RuntimeException("Error creating Stripe customer: " + e.getMessage(), e);
         }
     }
-
     @Override
     public com.stripe.model.Subscription createSubscription(
-            String customerId,
-            PlanType planType,
-            SubscriptionPeriod period,
-            String paymentMethodId) {
-        try {
-            log.info("Creating subscription for customer: {}, plan: {}, period: {}",
-                    customerId, planType, period);
+      String customerId,
+      PlanType planType,
+      SubscriptionPeriod period,
+      String paymentMethodId) {
+      try {
+        log.info("Creating subscription for customer: {}, plan: {}, period: {}",
+          customerId, planType, period);
 
-            // Adjuntar método de pago al cliente
-            PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
-            paymentMethod.attach(PaymentMethodAttachParams.builder()
-                    .setCustomer(customerId)
-                    .build());
-            log.info("Payment method {} attached to customer {}", paymentMethodId, customerId);
+        PaymentMethod paymentMethod = PaymentMethod.retrieve(paymentMethodId);
 
-            // Establecer como método de pago predeterminado
-            Customer customer = Customer.retrieve(customerId);
-            customer.update(CustomerUpdateParams.builder()
-                    .setInvoiceSettings(
-                            CustomerUpdateParams.InvoiceSettings.builder()
-                                    .setDefaultPaymentMethod(paymentMethodId)
-                                    .build()
-                    )
-                    .build());
+        String realPaymentMethodId = paymentMethod.getId();
 
-            String priceId = getPriceId(planType, period);
-            log.info("Using price ID: {}", priceId);
+        paymentMethod.attach(PaymentMethodAttachParams.builder()
+          .setCustomer(customerId)
+          .build());
+        log.info("Payment method {} attached to customer {}", realPaymentMethodId, customerId);
 
-            SubscriptionCreateParams params = SubscriptionCreateParams.builder()
-                    .setCustomer(customerId)
-                    .addItem(
-                            SubscriptionCreateParams.Item.builder()
-                                    .setPrice(priceId)
-                                    .build()
-                    )
-                    .setPaymentBehavior(SubscriptionCreateParams.PaymentBehavior.DEFAULT_INCOMPLETE)
-                    .setPaymentSettings(
-                            SubscriptionCreateParams.PaymentSettings.builder()
-                                    .setPaymentMethodTypes(
-                                            List.of(
-                                                    SubscriptionCreateParams.PaymentSettings.PaymentMethodType.CARD
-                                            )
-                                    )
-                                    .build()
-                    )
-                    .addExpand("latest_invoice.payment_intent")
-                    .putMetadata("planType", planType.name())
-                    .putMetadata("period", period.name())
-                    .build();
+        // 3. Establecemos como predeterminado usando el ID REAL
+        Customer customer = Customer.retrieve(customerId);
+        customer.update(CustomerUpdateParams.builder()
+          .setInvoiceSettings(
+            CustomerUpdateParams.InvoiceSettings.builder()
+              .setDefaultPaymentMethod(realPaymentMethodId)
+              .build()
+          )
+          .build());
 
-            com.stripe.model.Subscription subscription = com.stripe.model.Subscription.create(params);
-            log.info("Subscription created successfully: {}", subscription.getId());
-            return subscription;
+        String priceId = getPriceId(planType, period);
+        log.info("Using price ID: {}", priceId);
 
-        } catch (StripeException e) {
-            log.error("Error creating Stripe subscription: {}", e.getMessage(), e);
-            throw new RuntimeException("Error creating Stripe subscription: " + e.getMessage(), e);
-        }
+        SubscriptionCreateParams params = SubscriptionCreateParams.builder()
+          .setCustomer(customerId)
+          .addItem(
+            SubscriptionCreateParams.Item.builder()
+              .setPrice(priceId)
+              .build()
+          )
+          .setPaymentBehavior(SubscriptionCreateParams.PaymentBehavior.DEFAULT_INCOMPLETE)
+          .setPaymentSettings(
+            SubscriptionCreateParams.PaymentSettings.builder()
+              .setPaymentMethodTypes(
+                List.of(
+                  SubscriptionCreateParams.PaymentSettings.PaymentMethodType.CARD
+                )
+              )
+              .build()
+          )
+          .addExpand("latest_invoice.payment_intent")
+          .putMetadata("planType", planType.name())
+          .putMetadata("period", period.name())
+          .build();
+
+        com.stripe.model.Subscription subscription = com.stripe.model.Subscription.create(params);
+        log.info("Subscription created successfully: {}", subscription.getId());
+        return subscription;
+
+      } catch (StripeException e) {
+        log.error("Error creating Stripe subscription: {}", e.getMessage(), e);
+        throw new RuntimeException("Error creating Stripe subscription: " + e.getMessage(), e);
+      }
     }
 
     @Override
