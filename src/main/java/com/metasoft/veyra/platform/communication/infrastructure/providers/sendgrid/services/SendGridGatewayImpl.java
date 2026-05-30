@@ -5,10 +5,12 @@ import com.metasoft.veyra.platform.communication.domain.exceptions.Communication
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendEmailCommand;
 import com.metasoft.veyra.platform.communication.infrastructure.providers.sendgrid.configuration.SendGridSettings;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@ConditionalOnProperty(name = "integrations.sendgrid.enabled", havingValue = "true")
 public class SendGridGatewayImpl implements SendGridGateway {
 
     private final SendGridSettings sendGridSettings;
