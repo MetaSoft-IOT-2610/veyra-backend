@@ -5,10 +5,12 @@ import com.metasoft.veyra.platform.communication.domain.exceptions.Communication
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPushNotificationCommand;
 import com.metasoft.veyra.platform.communication.infrastructure.providers.fcm.configuration.FirebaseMessagingSettings;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@ConditionalOnProperty(name = "integrations.fcm.enabled", havingValue = "true")
 public class FirebaseMessagingGatewayImpl implements FirebaseMessagingGateway {
 
     private final FirebaseMessagingSettings firebaseMessagingSettings;
