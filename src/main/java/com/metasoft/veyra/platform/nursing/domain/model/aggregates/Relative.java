@@ -1,5 +1,7 @@
 package com.metasoft.veyra.platform.nursing.domain.model.aggregates;
+import com.metasoft.veyra.platform.nursing.domain.model.commands.UpdateRelativeCommand;
 import com.metasoft.veyra.platform.nursing.domain.model.events.RegisteredRelativeEvent;
+import com.metasoft.veyra.platform.nursing.domain.model.valueobjects.PersonProfileId;
 import com.metasoft.veyra.platform.nursing.domain.model.valueobjects.UserId;
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import com.metasoft.veyra.platform.shared.domain.model.valueobjects.EmailAddress;
@@ -40,5 +42,29 @@ private NursingHome nursingHome;
             throw new IllegalArgumentException("user is already linked to this relative");
         }
         this.userId=new UserId(userId);
+    }
+
+    // dentro de la clase Relative
+    public void updateRelative(UpdateRelativeCommand command, Long residentId) {
+        if (command == null) {
+            throw new IllegalArgumentException("Command cannot be null");
+        }
+        if (!getId().equals(command.id())) {
+            throw new IllegalArgumentException("Command ID does not match Relative ID");
+        }
+        if (command.emailAddress() == null || command.emailAddress().emailAddress().isBlank()) {
+            throw new IllegalArgumentException("Email address cannot be null or blank");
+        }
+        if (command.personName() == null || command.personName().firstName().isBlank() || command.personName().lastName().isBlank()) {
+            throw new IllegalArgumentException("First name and last name cannot be null or blank");
+        }
+        if (resident == null) {
+            throw new IllegalArgumentException("Resident cannot be null");
+        }
+
+        this.emailAddress = command.emailAddress();
+        this.personName = command.personName();
+        this.resident.setPersonProfileId(new PersonProfileId(residentId));
+
     }
 }
