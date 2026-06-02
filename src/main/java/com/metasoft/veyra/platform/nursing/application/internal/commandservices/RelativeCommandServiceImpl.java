@@ -53,10 +53,13 @@ public class RelativeCommandServiceImpl implements RelativeCommandService {
 
     @Override
     public Optional<Relative> handle(UpdateRelativeCommand command) {
-        var relative = relativeRepository.findById(command.id()).orElseThrow(() -> new IllegalArgumentException("Relative with id " + command.id() + " not found."));
+        var relative = relativeRepository.findById(command.id())
+                .orElseThrow(() -> new IllegalArgumentException("Relative with id " + command.id() + " not found."));
 
-        relative.updateRelative(command,command.residentId());
+        var newResident = residentRepository.findById(command.residentId())
+                .orElseThrow(() -> new IllegalArgumentException("Resident with id " + command.residentId() + " not found."));
 
+        relative.updateRelative(command, newResident);
 
         try {
             relativeRepository.save(relative);

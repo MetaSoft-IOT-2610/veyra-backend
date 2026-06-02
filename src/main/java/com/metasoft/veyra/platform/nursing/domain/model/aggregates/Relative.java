@@ -45,7 +45,7 @@ private NursingHome nursingHome;
     }
 
     // dentro de la clase Relative
-    public void updateRelative(UpdateRelativeCommand command, Long residentId) {
+    public void updateRelative(UpdateRelativeCommand command, Resident newResident) {
         if (command == null) {
             throw new IllegalArgumentException("Command cannot be null");
         }
@@ -58,13 +58,15 @@ private NursingHome nursingHome;
         if (command.personName() == null || command.personName().firstName().isBlank() || command.personName().lastName().isBlank()) {
             throw new IllegalArgumentException("First name and last name cannot be null or blank");
         }
-        if (resident == null) {
+        if (newResident == null) {
             throw new IllegalArgumentException("Resident cannot be null");
         }
 
+        // Aplicar cambios al estado del agregado Relative
         this.emailAddress = command.emailAddress();
         this.personName = command.personName();
-        this.resident.setPersonProfileId(new PersonProfileId(residentId));
+        this.resident = newResident;
+
 
     }
 }
