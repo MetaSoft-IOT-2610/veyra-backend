@@ -11,6 +11,7 @@ public class ActivityResourceFromEntityAssembler {
                 .toList();
         return new ActivityResource(
                 activity.getId(),
+                activity.getNursingHomeId(),
                 activity.getResidentId(),
                 activity.getHealthcareStaffId(),
                 activity.getType().name(),

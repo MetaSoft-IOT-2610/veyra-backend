@@ -9,11 +9,12 @@ import java.util.List;
 
 public class CreateActivityCommandFromResourceAssembler {
 
-    public static CreateActivityCommand toCommandFromResource(CreateActivityResource resource) {
+    public static CreateActivityCommand toCommandFromResource(Long nursingHomeId, CreateActivityResource resource) {
         List<RecurringDay> days = resource.recurringDays() != null
                 ? resource.recurringDays().stream().map(RecurringDay::valueOf).toList()
                 : List.of();
         return new CreateActivityCommand(
+                nursingHomeId,
                 resource.residentId(),
                 resource.healthcareStaffId(),
                 ActivityType.valueOf(resource.type()),

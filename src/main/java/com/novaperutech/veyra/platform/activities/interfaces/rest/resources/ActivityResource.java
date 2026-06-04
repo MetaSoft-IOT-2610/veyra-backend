@@ -4,6 +4,7 @@ import java.util.List;
 
 public record ActivityResource(
         Long id,
+        Long nursingHomeId,
         Long residentId,
         Long healthcareStaffId,
         String type,
