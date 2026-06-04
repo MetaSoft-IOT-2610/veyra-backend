@@ -1,21 +1,20 @@
 package com.novaperutech.veyra.platform.activities.interfaces.rest.transform;
 
-import com.novaperutech.veyra.platform.activities.domain.model.commands.CreateActivityCommand;
+import com.novaperutech.veyra.platform.activities.domain.model.commands.UpdateActivityCommand;
 import com.novaperutech.veyra.platform.activities.domain.model.valueobjects.ActivityType;
 import com.novaperutech.veyra.platform.activities.domain.model.valueobjects.RecurringDay;
-import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.CreateActivityResource;
+import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.UpdateActivityResource;
 
 import java.util.List;
 
-public class CreateActivityCommandFromResourceAssembler {
+public class UpdateActivityCommandFromResourceAssembler {
 
-    public static CreateActivityCommand toCommandFromResource(CreateActivityResource resource) {
+    public static UpdateActivityCommand toCommandFromResource(Long activityId, UpdateActivityResource resource) {
         List<RecurringDay> days = resource.recurringDays() != null
                 ? resource.recurringDays().stream().map(RecurringDay::valueOf).toList()
                 : List.of();
-        return new CreateActivityCommand(
-                resource.residentId(),
-                resource.healthcareStaffId(),
+        return new UpdateActivityCommand(
+                activityId,
                 ActivityType.valueOf(resource.type()),
                 resource.title(),
                 resource.isRecurring() != null && resource.isRecurring(),

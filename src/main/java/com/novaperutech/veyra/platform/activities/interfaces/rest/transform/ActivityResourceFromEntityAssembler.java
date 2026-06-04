@@ -6,12 +6,18 @@ import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.Acti
 public class ActivityResourceFromEntityAssembler {
 
     public static ActivityResource toResourceFromEntity(Activity activity) {
+        var recurringDays = activity.getRecurringDays().stream()
+                .map(Enum::name)
+                .toList();
         return new ActivityResource(
                 activity.getId(),
                 activity.getResidentId(),
                 activity.getHealthcareStaffId(),
                 activity.getType().name(),
-                activity.getStatus().name()
+                activity.getTitle(),
+                activity.getStatus().name(),
+                activity.getIsRecurring(),
+                recurringDays
         );
     }
 }
