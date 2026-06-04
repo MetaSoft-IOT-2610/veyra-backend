@@ -1,6 +1,7 @@
 package com.novaperutech.veyra.platform.activities.application.internal.queryservices;
 
 import com.novaperutech.veyra.platform.activities.domain.model.aggregates.Activity;
+import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivitiesByNursingHomeIdQuery;
 import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivitiesByResidentIdQuery;
 import com.novaperutech.veyra.platform.activities.domain.model.queries.GetActivityByIdQuery;
 import com.novaperutech.veyra.platform.activities.domain.model.queries.GetAllActivitiesQuery;
@@ -23,6 +24,11 @@ public class ActivityQueryServiceImpl implements ActivityQueryService {
     @Override
     public List<Activity> handle(GetAllActivitiesQuery query) {
         return activityRepository.findAll();
+    }
+
+    @Override
+    public List<Activity> handle(GetActivitiesByNursingHomeIdQuery query) {
+        return activityRepository.findByNursingHomeId(query.nursingHomeId());
     }
 
     @Override

@@ -8,5 +8,6 @@ import java.util.List;
 
 @Repository
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
+    List<Activity> findByNursingHomeId(Long nursingHomeId);
     List<Activity> findByResidentId(Long residentId);
 }
