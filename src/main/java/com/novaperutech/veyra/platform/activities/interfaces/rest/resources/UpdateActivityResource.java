@@ -2,13 +2,9 @@ package com.novaperutech.veyra.platform.activities.interfaces.rest.resources;
 
 import java.util.List;
 
-public record ActivityResource(
-        Long id,
-        Long residentId,
-        Long healthcareStaffId,
+public record UpdateActivityResource(
         String type,
         String title,
-        String status,
         Boolean isRecurring,
         List<String> recurringDays
 ) {}
