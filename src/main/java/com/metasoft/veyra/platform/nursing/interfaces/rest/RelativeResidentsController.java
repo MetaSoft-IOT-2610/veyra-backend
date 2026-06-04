@@ -64,5 +64,25 @@ public class RelativeResidentsController {
        return ResponseEntity.ok(residentsResource);
     }
 
+    @PutMapping("/{relativeId}")
+    @Operation(summary = "Update relative by ID", description = "Update relative information by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Relative updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "404", description = "Relative not found")
+    })
+    @Parameter(name = "relativeId", description = "The unique identifier of the relative (path parameter)", required = true)
+    public ResponseEntity<RelativeResource> updateRelative(@PathVariable Long relativeId,
+                                                           @RequestBody UpdateRelativeResource resource) {
+        var updateRelativeCommand = UpdateRelativeCommandFromResourceAssembler.toCommandFromResource(relativeId, resource);
+        var updatedRelative = relativeCommandServices.handle(updateRelativeCommand);
 
+        if (updatedRelative.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var relativeEntity = updatedRelative.get();
+        var relativeResource = RelativeResourceFromEntityAssembler.toResourceFromEntity(relativeEntity);
+        return ResponseEntity.ok(relativeResource);
+    }
 }
