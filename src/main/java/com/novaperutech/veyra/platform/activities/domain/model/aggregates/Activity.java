@@ -29,6 +29,9 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
     private ActivityStatus status;
 
     @Column(nullable = false)
+    private Long nursingHomeId;
+
+    @Column(nullable = false)
     private Long residentId;
 
     @Column(nullable = false)
@@ -46,6 +49,7 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
     protected Activity() {}
 
     public Activity(CreateActivityCommand command) {
+        this.nursingHomeId = command.nursingHomeId();
         this.type = command.type();
         this.title = command.title();
         this.status = ActivityStatus.PENDING;
@@ -55,11 +59,12 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
         this.recurringDays = command.recurringDays() != null ? command.recurringDays() : new ArrayList<>();
     }
 
-    public void update(UpdateActivityCommand command) {
+    public Activity update(UpdateActivityCommand command) {
         this.type = command.type();
         this.title = command.title();
         this.isRecurring = command.isRecurring();
         this.recurringDays = command.recurringDays() != null ? command.recurringDays() : new ArrayList<>();
+        return this;
     }
 
     public void advance() {

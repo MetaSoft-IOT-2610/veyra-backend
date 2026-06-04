@@ -6,6 +6,7 @@ import com.novaperutech.veyra.platform.activities.domain.model.valueobjects.Recu
 import java.util.List;
 
 public record CreateActivityCommand(
+        Long nursingHomeId,
         Long residentId,
         Long healthcareStaffId,
         ActivityType type,
