@@ -3,6 +3,8 @@ package com.novaperutech.veyra.platform.activities.application.internal.commands
 import com.novaperutech.veyra.platform.activities.domain.model.aggregates.Activity;
 import com.novaperutech.veyra.platform.activities.domain.model.commands.CompleteActivityCommand;
 import com.novaperutech.veyra.platform.activities.domain.model.commands.CreateActivityCommand;
+import com.novaperutech.veyra.platform.activities.domain.model.commands.DeleteActivityCommand;
+import com.novaperutech.veyra.platform.activities.domain.model.commands.UpdateActivityCommand;
 import com.novaperutech.veyra.platform.activities.domain.services.ActivityCommandService;
 import com.novaperutech.veyra.platform.activities.infrastructure.persistence.jpa.repositories.ActivityRepository;
 import org.springframework.stereotype.Service;
@@ -24,10 +26,26 @@ public class ActivityCommandServiceImpl implements ActivityCommandService {
     }
 
     @Override
+    public void handle(UpdateActivityCommand command) {
+        var activity = activityRepository.findById(command.activityId())
+                .orElseThrow(() -> new IllegalArgumentException("Activity with ID " + command.activityId() + " not found."));
+        activity.update(command);
+        activityRepository.save(activity);
+    }
+
+    @Override
+    public void handle(DeleteActivityCommand command) {
+        if (!activityRepository.existsById(command.activityId())) {
+            throw new IllegalArgumentException("Activity with ID " + command.activityId() + " not found.");
+        }
+        activityRepository.deleteById(command.activityId());
+    }
+
+    @Override
     public void handle(CompleteActivityCommand command) {
         var activity = activityRepository.findById(command.activityId())
                 .orElseThrow(() -> new IllegalArgumentException("Activity with ID " + command.activityId() + " not found."));
-        activity.complete();
+        activity.advance();
         activityRepository.save(activity);
     }
 }
