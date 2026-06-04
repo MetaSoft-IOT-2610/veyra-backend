@@ -1,4 +1,5 @@
 package com.metasoft.veyra.platform.nursing.domain.model.aggregates;
+import com.metasoft.veyra.platform.nursing.domain.model.events.RegisteredRelativeEvent;
 import com.metasoft.veyra.platform.nursing.domain.model.commands.UpdateRelativeCommand;
 import com.metasoft.veyra.platform.nursing.domain.model.events.RegisteredRelativeEvent;
 import com.metasoft.veyra.platform.nursing.domain.model.valueobjects.PersonProfileId;
@@ -6,6 +7,10 @@ import com.metasoft.veyra.platform.nursing.domain.model.valueobjects.UserId;
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import com.metasoft.veyra.platform.shared.domain.model.valueobjects.EmailAddress;
 import com.metasoft.veyra.platform.shared.domain.model.valueobjects.PersonName;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.*;
 import lombok.Getter;
 @Getter
