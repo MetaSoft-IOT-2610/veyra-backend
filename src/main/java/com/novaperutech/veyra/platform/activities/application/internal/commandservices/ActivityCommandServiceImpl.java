@@ -11,15 +11,27 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Implementation of the {@link ActivityCommandService} interface.
+ * <p>This class is responsible for handling commands related to the Activity aggregate.
+ * It requires an {@link ActivityRepository}.</p>
+ * @see ActivityCommandService
+ * @see ActivityRepository
+ */
 @Service
 public class ActivityCommandServiceImpl implements ActivityCommandService {
 
     private final ActivityRepository activityRepository;
 
+    /**
+     * Constructor of the class.
+     * @param activityRepository the repository used for Activity persistence
+     */
     public ActivityCommandServiceImpl(ActivityRepository activityRepository) {
         this.activityRepository = activityRepository;
     }
 
+    // inherit javadoc
     @Override
     public Long handle(CreateActivityCommand command) {
         var activity = new Activity(command);
@@ -31,6 +43,7 @@ public class ActivityCommandServiceImpl implements ActivityCommandService {
         return activity.getId();
     }
 
+    // inherit javadoc
     @Override
     public Optional<Activity> handle(UpdateActivityCommand command) {
         var result = activityRepository.findById(command.activityId());
@@ -45,6 +58,7 @@ public class ActivityCommandServiceImpl implements ActivityCommandService {
         }
     }
 
+    // inherit javadoc
     @Override
     public void handle(DeleteActivityCommand command) {
         if (!activityRepository.existsById(command.activityId()))
@@ -56,6 +70,7 @@ public class ActivityCommandServiceImpl implements ActivityCommandService {
         }
     }
 
+    // inherit javadoc
     @Override
     public void handle(CompleteActivityCommand command) {
         var activity = activityRepository.findById(command.activityId())

@@ -12,6 +12,18 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Activity aggregate root.
+ * <p>
+ * Represents a care activity assigned to a resident within a nursing home.
+ * An activity has a type, title, status lifecycle (PENDING → IN_PROGRESS → COMPLETED),
+ * and optional recurrence configuration.
+ * </p>
+ * @see ActivityType
+ * @see ActivityStatus
+ * @see RecurringDay
+ * @since 1.0
+ */
 @Entity
 @Table(name = "activities")
 @Getter
@@ -46,8 +58,16 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
     @Column(name = "day")
     private List<RecurringDay> recurringDays = new ArrayList<>();
 
+    /**
+     * Default constructor required by JPA.
+     */
     protected Activity() {}
 
+    /**
+     * Creates a new Activity from a {@link CreateActivityCommand}.
+     * The initial status is set to {@code PENDING}.
+     * @param command the command containing all data required to create the activity
+     */
     public Activity(CreateActivityCommand command) {
         this.nursingHomeId = command.nursingHomeId();
         this.type = command.type();
@@ -59,6 +79,11 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
         this.recurringDays = command.recurringDays() != null ? command.recurringDays() : new ArrayList<>();
     }
 
+    /**
+     * Updates the mutable fields of this activity.
+     * @param command the command containing the new values for type, title, isRecurring and recurringDays
+     * @return this activity instance after update
+     */
     public Activity update(UpdateActivityCommand command) {
         this.type = command.type();
         this.title = command.title();
@@ -67,6 +92,10 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
         return this;
     }
 
+    /**
+     * Advances the activity status through the lifecycle: PENDING → IN_PROGRESS → COMPLETED.
+     * @throws IllegalStateException if the activity is already COMPLETED
+     */
     public void advance() {
         if (this.status == ActivityStatus.COMPLETED) {
             throw new IllegalStateException("Activity is already completed.");

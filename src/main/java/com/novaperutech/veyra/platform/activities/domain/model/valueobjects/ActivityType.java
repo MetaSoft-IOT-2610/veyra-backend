@@ -1,5 +1,8 @@
 package com.novaperutech.veyra.platform.activities.domain.model.valueobjects;
 
+/**
+ * Represents the category of a care activity performed within a nursing home.
+ */
 public enum ActivityType {
     MEAL,
     BATH,

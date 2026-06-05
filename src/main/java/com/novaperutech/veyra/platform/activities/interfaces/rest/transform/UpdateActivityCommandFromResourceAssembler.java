@@ -7,8 +7,17 @@ import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.Upda
 
 import java.util.List;
 
+/**
+ * Assembler that converts an {@link UpdateActivityResource} into an {@link UpdateActivityCommand}.
+ */
 public class UpdateActivityCommandFromResourceAssembler {
 
+    /**
+     * Converts an {@link UpdateActivityResource} and the path-provided activity ID into an {@link UpdateActivityCommand}.
+     * @param activityId the activity ID extracted from the request path
+     * @param resource the REST resource containing the updated activity data
+     * @return the corresponding domain command
+     */
     public static UpdateActivityCommand toCommandFromResource(Long activityId, UpdateActivityResource resource) {
         List<RecurringDay> days = resource.recurringDays() != null
                 ? resource.recurringDays().stream().map(RecurringDay::valueOf).toList()

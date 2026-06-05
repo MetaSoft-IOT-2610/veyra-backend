@@ -7,8 +7,17 @@ import com.novaperutech.veyra.platform.activities.interfaces.rest.resources.Crea
 
 import java.util.List;
 
+/**
+ * Assembler that converts a {@link CreateActivityResource} into a {@link CreateActivityCommand}.
+ */
 public class CreateActivityCommandFromResourceAssembler {
 
+    /**
+     * Converts a {@link CreateActivityResource} and the path-provided nursing home ID into a {@link CreateActivityCommand}.
+     * @param nursingHomeId the nursing home ID extracted from the request path
+     * @param resource the REST resource containing the activity creation data
+     * @return the corresponding domain command
+     */
     public static CreateActivityCommand toCommandFromResource(Long nursingHomeId, CreateActivityResource resource) {
         List<RecurringDay> days = resource.recurringDays() != null
                 ? resource.recurringDays().stream().map(RecurringDay::valueOf).toList()

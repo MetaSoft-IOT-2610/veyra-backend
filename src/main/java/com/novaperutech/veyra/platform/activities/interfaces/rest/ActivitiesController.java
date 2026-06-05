@@ -24,6 +24,10 @@ import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+/**
+ * ActivitiesController
+ * <p>All activity-related endpoints, scoped to a specific nursing home.</p>
+ */
 @RestController
 @RequestMapping(value = "/api/v1/nursing-homes/{nursingHomeId}/activities", produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Activities", description = "Activities Management Endpoints")
@@ -32,6 +36,11 @@ public class ActivitiesController {
     private final ActivityCommandService activityCommandService;
     private final ActivityQueryService activityQueryService;
 
+    /**
+     * Constructor.
+     * @param activityCommandService the {@link ActivityCommandService} instance
+     * @param activityQueryService the {@link ActivityQueryService} instance
+     */
     public ActivitiesController(ActivityCommandService activityCommandService, ActivityQueryService activityQueryService) {
         this.activityCommandService = activityCommandService;
         this.activityQueryService = activityQueryService;
@@ -40,6 +49,11 @@ public class ActivitiesController {
     @GetMapping
     @Operation(summary = "Get activities by nursing home", description = "Returns all activities for a given nursing home.")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "Activities retrieved successfully"))
+    /**
+     * Returns all activities for a given nursing home.
+     * @param nursingHomeId the nursing home ID from the request path
+     * @return a list of {@link ActivityResource} for the nursing home
+     */
     public ResponseEntity<List<ActivityResource>> getActivitiesByNursingHome(@PathVariable Long nursingHomeId) {
         var activities = activityQueryService.handle(new GetActivitiesByNursingHomeIdQuery(nursingHomeId));
         var resources = activities.stream()
@@ -54,6 +68,12 @@ public class ActivitiesController {
             @ApiResponse(responseCode = "201", description = "Activity created"),
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
+    /**
+     * Creates a new activity within the given nursing home.
+     * @param nursingHomeId the nursing home ID from the request path
+     * @param resource the {@link CreateActivityResource} with the activity data
+     * @return the created {@link ActivityResource} with HTTP 201
+     */
     public ResponseEntity<ActivityResource> createActivity(@PathVariable Long nursingHomeId, @RequestBody CreateActivityResource resource) {
         var command = CreateActivityCommandFromResourceAssembler.toCommandFromResource(nursingHomeId, resource);
         var activityId = activityCommandService.handle(command);
@@ -70,6 +90,13 @@ public class ActivitiesController {
             @ApiResponse(responseCode = "200", description = "Activity updated"),
             @ApiResponse(responseCode = "400", description = "Activity not found or invalid input")
     })
+    /**
+     * Updates an existing activity.
+     * @param nursingHomeId the nursing home ID from the request path
+     * @param activityId the activity ID from the request path
+     * @param resource the {@link UpdateActivityResource} with the new values
+     * @return the updated {@link ActivityResource}
+     */
     public ResponseEntity<ActivityResource> updateActivity(@PathVariable Long nursingHomeId, @PathVariable Long activityId, @RequestBody UpdateActivityResource resource) {
         var command = UpdateActivityCommandFromResourceAssembler.toCommandFromResource(activityId, resource);
         var updated = activityCommandService.handle(command);
@@ -84,6 +111,12 @@ public class ActivitiesController {
             @ApiResponse(responseCode = "200", description = "Activity deleted"),
             @ApiResponse(responseCode = "400", description = "Activity not found")
     })
+    /**
+     * Deletes an activity by its ID.
+     * @param nursingHomeId the nursing home ID from the request path
+     * @param activityId the activity ID to delete
+     * @return a success message with HTTP 200
+     */
     public ResponseEntity<?> deleteActivity(@PathVariable Long nursingHomeId, @PathVariable Long activityId) {
         activityCommandService.handle(new DeleteActivityCommand(activityId));
         return ResponseEntity.ok("Activity with given id successfully deleted");
@@ -96,6 +129,12 @@ public class ActivitiesController {
             @ApiResponse(responseCode = "400", description = "Activity not found"),
             @ApiResponse(responseCode = "409", description = "Activity already completed")
     })
+    /**
+     * Advances the status of an activity through its lifecycle (PENDING → IN_PROGRESS → COMPLETED).
+     * @param nursingHomeId the nursing home ID from the request path
+     * @param activityId the activity ID to advance
+     * @return the updated {@link ActivityResource} after the status transition
+     */
     public ResponseEntity<ActivityResource> advanceActivityStatus(@PathVariable Long nursingHomeId, @PathVariable Long activityId) {
         activityCommandService.handle(new CompleteActivityCommand(activityId));
         var activity = activityQueryService.handle(new GetActivityByIdQuery(activityId));
