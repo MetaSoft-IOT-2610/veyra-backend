@@ -3,8 +3,13 @@ package com.metasoft.veyra.platform.communication.domain.model.commands;
 public record SendPushNotificationCommand(
         String deviceToken,
         String title,
-        String body
+        String body,
+        Long notificationId
 ) {
+    public SendPushNotificationCommand(String deviceToken, String title, String body) {
+        this(deviceToken, title, body, null);
+    }
+
     public SendPushNotificationCommand {
         if (deviceToken == null || deviceToken.isBlank()) {
             throw new IllegalArgumentException("Device token cannot be null or blank");
