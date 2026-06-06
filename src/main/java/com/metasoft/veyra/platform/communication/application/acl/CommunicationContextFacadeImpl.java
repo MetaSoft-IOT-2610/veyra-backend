@@ -1,12 +1,19 @@
 package com.metasoft.veyra.platform.communication.application.acl;
 
+import com.metasoft.veyra.platform.communication.domain.model.commands.MarkNotificationAsReadCommand;
+import com.metasoft.veyra.platform.communication.domain.model.commands.RegisterUserPushTokenCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendHtmlEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPlainEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPushNotificationCommand;
+import com.metasoft.veyra.platform.communication.domain.model.commands.SendPushNotificationToUserCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendTemplateEmailCommand;
+import com.metasoft.veyra.platform.communication.domain.model.commands.UnregisterUserPushTokenCommand;
 import com.metasoft.veyra.platform.communication.domain.model.valueobjects.EmailRecipients;
+import com.metasoft.veyra.platform.communication.domain.model.valueobjects.PushPlatform;
 import com.metasoft.veyra.platform.communication.domain.services.EmailNotificationCommandService;
 import com.metasoft.veyra.platform.communication.domain.services.PushNotificationCommandService;
+import com.metasoft.veyra.platform.communication.domain.services.UserNotificationCommandService;
+import com.metasoft.veyra.platform.communication.domain.services.UserPushTokenCommandService;
 import com.metasoft.veyra.platform.communication.interfaces.acl.CommunicationContextFacade;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +25,19 @@ public class CommunicationContextFacadeImpl implements CommunicationContextFacad
 
     private final EmailNotificationCommandService emailNotificationCommandService;
     private final PushNotificationCommandService pushNotificationCommandService;
+    private final UserPushTokenCommandService userPushTokenCommandService;
+    private final UserNotificationCommandService userNotificationCommandService;
 
     public CommunicationContextFacadeImpl(
             EmailNotificationCommandService emailNotificationCommandService,
-            PushNotificationCommandService pushNotificationCommandService
+            PushNotificationCommandService pushNotificationCommandService,
+            UserPushTokenCommandService userPushTokenCommandService,
+            UserNotificationCommandService userNotificationCommandService
     ) {
         this.emailNotificationCommandService = emailNotificationCommandService;
         this.pushNotificationCommandService = pushNotificationCommandService;
+        this.userPushTokenCommandService = userPushTokenCommandService;
+        this.userNotificationCommandService = userNotificationCommandService;
     }
 
     @Override
@@ -51,5 +64,26 @@ public class CommunicationContextFacadeImpl implements CommunicationContextFacad
     @Override
     public void sendPushNotification(String deviceToken, String title, String body) {
         pushNotificationCommandService.handle(new SendPushNotificationCommand(deviceToken, title, body));
+    }
+
+    @Override
+    public void registerUserPushToken(Long userId, String token, PushPlatform platform) {
+        userPushTokenCommandService.handle(new RegisterUserPushTokenCommand(userId, token, platform));
+    }
+
+    @Override
+    public void unregisterUserPushToken(Long userId, String token) {
+        userPushTokenCommandService.handle(new UnregisterUserPushTokenCommand(userId, token));
+    }
+
+    @Override
+    public Long sendPushNotificationToUser(Long userId, String title, String body) {
+        return pushNotificationCommandService.handle(new SendPushNotificationToUserCommand(userId, title, body))
+                .notificationId();
+    }
+
+    @Override
+    public void markNotificationAsRead(Long userId, Long notificationId) {
+        userNotificationCommandService.handle(new MarkNotificationAsReadCommand(userId, notificationId));
     }
 }

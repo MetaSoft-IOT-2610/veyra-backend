@@ -2,6 +2,9 @@ package com.metasoft.veyra.platform.communication.interfaces.rest;
 
 import com.metasoft.veyra.platform.communication.domain.exceptions.CommunicationIntegrationException;
 import com.metasoft.veyra.platform.communication.domain.exceptions.CommunicationProviderNotConfiguredException;
+import com.metasoft.veyra.platform.communication.domain.exceptions.UserNotFoundForPushException;
+import com.metasoft.veyra.platform.communication.domain.exceptions.UserNotificationNotFoundException;
+import com.metasoft.veyra.platform.communication.domain.exceptions.UserPushTokenNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.ErrorResponse;
@@ -22,5 +25,11 @@ public class CommunicationExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     ErrorResponse handleException(CommunicationIntegrationException ex) {
         return ErrorResponse.create(ex, HttpStatusCode.valueOf(HttpStatus.BAD_GATEWAY.value()), ex.getMessage());
+    }
+
+    @ExceptionHandler({UserNotFoundForPushException.class, UserPushTokenNotFoundException.class, UserNotificationNotFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    ErrorResponse handleNotFoundException(RuntimeException ex) {
+        return ErrorResponse.create(ex, HttpStatusCode.valueOf(HttpStatus.NOT_FOUND.value()), ex.getMessage());
     }
 }

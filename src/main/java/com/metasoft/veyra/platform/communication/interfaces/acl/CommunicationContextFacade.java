@@ -1,5 +1,7 @@
 package com.metasoft.veyra.platform.communication.interfaces.acl;
 
+import com.metasoft.veyra.platform.communication.domain.model.valueobjects.PushPlatform;
+
 import java.util.List;
 import java.util.Map;
 
@@ -11,4 +13,12 @@ public interface CommunicationContextFacade {
     void sendTemplateEmail(List<String> recipients, String templateId, Map<String, Object> dynamicTemplateData);
 
     void sendPushNotification(String deviceToken, String title, String body);
+
+    void registerUserPushToken(Long userId, String token, PushPlatform platform);
+
+    void unregisterUserPushToken(Long userId, String token);
+
+    Long sendPushNotificationToUser(Long userId, String title, String body);
+
+    void markNotificationAsRead(Long userId, Long notificationId);
 }
