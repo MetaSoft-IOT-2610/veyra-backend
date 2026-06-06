@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,13 +33,13 @@ public class NursingHomeStaffController {
         this.staffCommandServices = staffCommandServices;
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create new Staff member",description = "Create new Staff member")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",description = "Staff member created"),
             @ApiResponse(responseCode = "400",description = "Bad request")
     })
-    public ResponseEntity<StaffResource> createStaff(@RequestBody CreateStaffResource resource, @PathVariable Long nursingHomeId){
+    public ResponseEntity<StaffResource> createStaff(@Valid @ModelAttribute CreateStaffResource resource, @PathVariable Long nursingHomeId){
         var staffCommand= CreateStaffCommandFromResourceAssembler.toCommandFromResource(resource,nursingHomeId);
         var staffId= staffCommandServices.handle(staffCommand);
         if (staffId==null||staffId==0L){ return ResponseEntity.badRequest().build();}

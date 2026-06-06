@@ -1,5 +1,6 @@
 package com.metasoft.veyra.platform.analytics.domain.model.commands;
 
+import com.metasoft.veyra.platform.analytics.domain.model.aggregates.Metric;
 import com.metasoft.veyra.platform.analytics.domain.model.valueobjects.MetricCategory;
 import com.metasoft.veyra.platform.analytics.domain.model.valueobjects.MetricType;
 
@@ -9,7 +10,7 @@ import java.time.LocalDate;
  * Command object that carries data required to record a metric occurrence.
  *
  * <p>This object is used inside application/command services to request the
- * creation or aggregation of a {@link com.metasoft.veyra.platform.analytics.domain.model.aggregates.Metric}.
+ * creation or aggregation of a {@link Metric}.
  * It represents a write-side intent and should be validated by the caller or
  * the application layer before handling.</p>
  *

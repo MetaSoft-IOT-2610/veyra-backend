@@ -2,51 +2,32 @@ package com.metasoft.veyra.platform.profiles.interfaces.rest.transform;
 
 import com.metasoft.veyra.platform.profiles.domain.model.commands.CreatePersonProfileCommand;
 import com.metasoft.veyra.platform.profiles.interfaces.rest.resources.CreatePersonProfileResource;
-
-import java.util.Base64;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 public class CreatePersonProfileCommandFromResourceAssembler {
 
-    public static CreatePersonProfileCommand toCommandFromResource(CreatePersonProfileResource resource) {
-        byte[] photoBytes = decodeBase64Photo(resource.photoBase64());
-        String photoFileName = generatePhotoFileName(resource.dni());
-
-        return new CreatePersonProfileCommand(
-                resource.dni(),
-                resource.firstName(),
-                resource.lastName(),
-                resource.birthDate(),
-                resource.age(),
-                resource.emailAddress(),
-                resource.street(),
-                resource.number(),
-                resource.city(),
-                resource.postalCode(),
-                resource.country(),
-                photoBytes,
-                photoFileName,
-                resource.phoneNumber()
-        );
-    }
-
-    private static byte[] decodeBase64Photo(String base64Photo) {
-        if (base64Photo == null || base64Photo.isEmpty()) {
-            throw new IllegalArgumentException("Photo is required");
-        }
-
+    public static CreatePersonProfileCommand toCommandFromResource(
+            CreatePersonProfileResource resource){
         try {
-            String base64Data = base64Photo;
-            if (base64Data.contains(",")) {
-                base64Data = base64Data.split(",")[1];
-            }
-
-            return Base64.getDecoder().decode(base64Data);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid Base64 photo format: " + e.getMessage());
+            return new CreatePersonProfileCommand(
+                    resource.dni(),
+                    resource.firstName(),
+                    resource.lastName(),
+                    resource.birthDate(),
+                    resource.age(),
+                    resource.emailAddress(),
+                    resource.street(),
+                    resource.number(),
+                    resource.city(),
+                    resource.postalCode(),
+                    resource.country(),
+                  resource.photo().getBytes(),
+                    resource.photo().getOriginalFilename(),
+                    resource.phoneNumber()
+            );
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error reading photo: " + e.getMessage());
         }
-    }
-
-    private static String generatePhotoFileName(String dni) {
-        return "profile_" + dni + "_" + System.currentTimeMillis() + ".jpg";
     }
 }

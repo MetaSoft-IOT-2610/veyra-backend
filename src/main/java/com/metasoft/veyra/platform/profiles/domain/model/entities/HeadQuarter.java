@@ -4,7 +4,6 @@ import com.metasoft.veyra.platform.profiles.domain.model.aggregates.BusinessProf
 import com.metasoft.veyra.platform.shared.domain.model.entities.AuditableModel;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Entity

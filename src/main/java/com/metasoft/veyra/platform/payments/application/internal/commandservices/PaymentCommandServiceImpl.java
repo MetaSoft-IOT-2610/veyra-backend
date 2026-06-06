@@ -1,4 +1,5 @@
 package com.metasoft.veyra.platform.payments.application.internal.commandservices;
+import com.metasoft.veyra.platform.payments.domain.model.valueobjects.PaymentStatus;
 import com.metasoft.veyra.platform.payments.domain.exceptions.SubscriptionNotFoundException;
 import com.metasoft.veyra.platform.payments.domain.model.aggregates.Payment;
 import com.metasoft.veyra.platform.payments.domain.model.commands.ProcessPaymentCommand;
@@ -135,7 +136,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                 break;
 
             case "canceled":
-                payment.updateStatus(com.metasoft.veyra.platform.payments.domain.model.valueobjects.PaymentStatus.CANCELED);
+                payment.updateStatus(PaymentStatus.CANCELED);
                 log.info("Payment marked as CANCELED");
                 break;
 

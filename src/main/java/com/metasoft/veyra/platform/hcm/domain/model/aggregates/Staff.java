@@ -6,12 +6,14 @@ import com.metasoft.veyra.platform.hcm.domain.model.valueobjects.*;
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
 @Getter
+@Setter
 public class Staff extends AuditableAbstractAggregateRoot<Staff> {
  protected Staff(){
 
@@ -22,7 +24,7 @@ public class Staff extends AuditableAbstractAggregateRoot<Staff> {
     private final ContractHistory contractHistory;
 
     @Embedded
- private    EmergencyContact emergencyContact;
+ private EmergencyContact emergencyContact;
     @Embedded
     private NursingHomeId nursingHomeId;
  @Embedded

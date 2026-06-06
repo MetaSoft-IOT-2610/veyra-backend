@@ -1,4 +1,4 @@
-package com.novaperutech.veyra.platform;
+package com.metasoft.veyra.platform;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
