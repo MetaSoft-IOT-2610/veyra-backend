@@ -73,7 +73,7 @@ public class TokenServiceImpl implements BearerTokenService {
                 .subject(username)
                 .issuedAt(issuedAt)
                 .expiration(expiration)
-                .signWith(key, Jwts.SIG.HS384)
+                .signWith(key)
                 .compact();
     }
 
