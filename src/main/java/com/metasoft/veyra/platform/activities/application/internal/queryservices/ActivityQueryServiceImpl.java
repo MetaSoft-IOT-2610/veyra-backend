@@ -1,57 +1,58 @@
 package com.metasoft.veyra.platform.activities.application.internal.queryservices;
 
 import com.metasoft.veyra.platform.activities.domain.model.aggregates.Activity;
-import com.metasoft.veyra.platform.activities.domain.model.queries.GetActivitiesByDateAndNursingHomeQuery;
-import com.metasoft.veyra.platform.activities.domain.model.valueobjects.ActivityView;
+import com.metasoft.veyra.platform.activities.domain.model.queries.GetActivitiesByNursingHomeIdQuery;
+import com.metasoft.veyra.platform.activities.domain.model.queries.GetActivitiesByResidentIdQuery;
+import com.metasoft.veyra.platform.activities.domain.model.queries.GetActivityByIdQuery;
+import com.metasoft.veyra.platform.activities.domain.model.queries.GetAllActivitiesQuery;
 import com.metasoft.veyra.platform.activities.domain.services.ActivityQueryService;
 import com.metasoft.veyra.platform.activities.infrastructure.persistence.jpa.repositories.ActivityRepository;
-import com.metasoft.veyra.platform.hcm.domain.model.aggregates.Staff;
-import com.metasoft.veyra.platform.nursing.domain.model.aggregates.Resident;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
+/**
+ * Implementation of the {@link ActivityQueryService} interface.
+ * <p>This class is responsible for handling queries related to the Activity aggregate.
+ * It requires an {@link ActivityRepository}.</p>
+ * @see ActivityQueryService
+ * @see ActivityRepository
+ */
 @Service
 public class ActivityQueryServiceImpl implements ActivityQueryService {
 
     private final ActivityRepository activityRepository;
 
+    /**
+     * Constructor of the class.
+     * @param activityRepository the repository used for Activity queries
+     */
     public ActivityQueryServiceImpl(ActivityRepository activityRepository) {
         this.activityRepository = activityRepository;
     }
 
+    // inherit javadoc
     @Override
-    public List<ActivityView> handle(GetActivitiesByDateAndNursingHomeQuery query) {
-
-        List<Activity> activities = activityRepository.findByActivityDateAndNursingHomeId_NursingHomeIdOrderByPeriod_StartTime(
-                query.date(),
-                query.nursingHomeId()
-        );
-
-        return activities.stream()
-                .map(this::mapActivityToActivityView)
-                .collect(Collectors.toList());
+    public List<Activity> handle(GetAllActivitiesQuery query) {
+        return activityRepository.findAll();
     }
 
-    private ActivityView mapActivityToActivityView(Activity activity) {
+    // inherit javadoc
+    @Override
+    public List<Activity> handle(GetActivitiesByNursingHomeIdQuery query) {
+        return activityRepository.findByNursingHomeId(query.nursingHomeId());
+    }
 
-        Resident resident = activity.getResident();
-        Staff staff = activity.getStaff();
-        String residentName = "Residente " + resident.getId();
-        String attendantName = "Staff " + staff.getId();
+    // inherit javadoc
+    @Override
+    public List<Activity> handle(GetActivitiesByResidentIdQuery query) {
+        return activityRepository.findByResidentId(query.residentId());
+    }
 
-        return new ActivityView(
-                activity.getId(),
-                activity.getName(),
-                activity.getPeriod().getStartTime(),
-                activity.getPeriod().getEndTime(),
-                activity.getArea().getAreaCode(),
-                activity.getStatus(),
-                activity.getResidentId(),
-                residentName,
-                activity.getStaffMemberId(),
-                attendantName
-        );
+    // inherit javadoc
+    @Override
+    public Optional<Activity> handle(GetActivityByIdQuery query) {
+        return activityRepository.findById(query.activityId());
     }
 }
