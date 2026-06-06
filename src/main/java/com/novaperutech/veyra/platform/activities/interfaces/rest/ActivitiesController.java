@@ -97,7 +97,7 @@ public class ActivitiesController {
      * @param resource the {@link UpdateActivityResource} with the new values
      * @return the updated {@link ActivityResource}
      */
-    public ResponseEntity<ActivityResource> updateActivity(@PathVariable Long nursingHomeId, @PathVariable Long activityId, @RequestBody UpdateActivityResource resource) {
+    public ResponseEntity<ActivityResource> updateActivity(@PathVariable Long activityId, @RequestBody UpdateActivityResource resource) {
         var command = UpdateActivityCommandFromResourceAssembler.toCommandFromResource(activityId, resource);
         var updated = activityCommandService.handle(command);
         if (updated.isEmpty()) return ResponseEntity.badRequest().build();
@@ -117,7 +117,7 @@ public class ActivitiesController {
      * @param activityId the activity ID to delete
      * @return HTTP 204 No Content on success
      */
-    public ResponseEntity<Void> deleteActivity(@PathVariable Long nursingHomeId, @PathVariable Long activityId) {
+    public ResponseEntity<Void> deleteActivity(@PathVariable Long activityId) {
         activityCommandService.handle(new DeleteActivityCommand(activityId));
         return ResponseEntity.noContent().build();
     }
@@ -135,7 +135,7 @@ public class ActivitiesController {
      * @param activityId the activity ID to advance
      * @return the updated {@link ActivityResource} after the status transition
      */
-    public ResponseEntity<ActivityResource> advanceActivityStatus(@PathVariable Long nursingHomeId, @PathVariable Long activityId) {
+    public ResponseEntity<ActivityResource> advanceActivityStatus(@PathVariable Long activityId) {
         activityCommandService.handle(new CompleteActivityCommand(activityId));
         var activity = activityQueryService.handle(new GetActivityByIdQuery(activityId));
         if (activity.isEmpty()) return ResponseEntity.badRequest().build();
