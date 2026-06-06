@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:src/main/java/com/metasoft/veyra/platform/profiles/domain/model/valueobjects/PersonName.java
-package com.metasoft.veyra.platform.profiles.domain.model.valueobjects;
-========
 package com.metasoft.veyra.platform.shared.domain.model.valueobjects;
->>>>>>>> origin/develop:src/main/java/com/metasoft/veyra/platform/shared/domain/model/valueobjects/PersonName.java
 
 import jakarta.persistence.Embeddable;
 
