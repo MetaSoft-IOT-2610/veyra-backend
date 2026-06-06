@@ -5,8 +5,4 @@ public class CreateRelativeCommandFromResourceAssembler {
     public static CreateRelativeCommand toCommandFromResource(CreateRelativeResource resource, Long nursingHomeId) {
         return new CreateRelativeCommand(resource.firstName(),resource.lastName(),resource.email(),resource.residentId(),nursingHomeId);
     }
-
-    public static CreateRelativeCommand toCommandFromResource(CreateRelativeResource resource) {
-        return new CreateRelativeCommand(resource.firstName(),resource.lastName(),resource.email(),resource.residentId(),null);
-    }
 }
