@@ -108,18 +108,18 @@ public class ActivitiesController {
     @DeleteMapping("/{activityId}")
     @Operation(summary = "Delete activity", description = "Deletes an activity by ID.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Activity deleted"),
+            @ApiResponse(responseCode = "204", description = "Activity deleted"),
             @ApiResponse(responseCode = "400", description = "Activity not found")
     })
     /**
      * Deletes an activity by its ID.
      * @param nursingHomeId the nursing home ID from the request path
      * @param activityId the activity ID to delete
-     * @return a success message with HTTP 200
+     * @return HTTP 204 No Content on success
      */
-    public ResponseEntity<?> deleteActivity(@PathVariable Long nursingHomeId, @PathVariable Long activityId) {
+    public ResponseEntity<Void> deleteActivity(@PathVariable Long nursingHomeId, @PathVariable Long activityId) {
         activityCommandService.handle(new DeleteActivityCommand(activityId));
-        return ResponseEntity.ok("Activity with given id successfully deleted");
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{activityId}/complete")
