@@ -76,7 +76,7 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
         this.residentId = command.residentId();
         this.healthcareStaffId = command.healthcareStaffId();
         this.isRecurring = command.isRecurring();
-        this.recurringDays = command.recurringDays() != null ? command.recurringDays() : new ArrayList<>();
+        this.recurringDays = command.recurringDays() != null ? new ArrayList<>(command.recurringDays()) : new ArrayList<>();
     }
 
     /**
@@ -88,7 +88,7 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
         this.type = command.type();
         this.title = command.title();
         this.isRecurring = command.isRecurring();
-        this.recurringDays = command.recurringDays() != null ? command.recurringDays() : new ArrayList<>();
+        this.recurringDays = command.recurringDays() != null ? new ArrayList<>(command.recurringDays()) : new ArrayList<>();
         return this;
     }
 
