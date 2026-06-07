@@ -4,9 +4,11 @@ import com.metasoft.veyra.platform.communication.domain.services.EmailNotificati
 import com.metasoft.veyra.platform.communication.interfaces.rest.resources.CommunicationAcceptedResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.resources.SendHtmlEmailResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.resources.SendPlainEmailResource;
+import com.metasoft.veyra.platform.communication.interfaces.rest.resources.SendRenderedTemplateEmailResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.resources.SendTemplateEmailResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.transform.SendHtmlEmailCommandFromResourceAssembler;
 import com.metasoft.veyra.platform.communication.interfaces.rest.transform.SendPlainEmailCommandFromResourceAssembler;
+import com.metasoft.veyra.platform.communication.interfaces.rest.transform.SendRenderedTemplateEmailCommandFromResourceAssembler;
 import com.metasoft.veyra.platform.communication.interfaces.rest.transform.SendTemplateEmailCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -82,5 +84,26 @@ public class EmailNotificationsController {
         emailNotificationCommandService.handle(command);
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(new CommunicationAcceptedResource("Template email accepted for delivery"));
+    }
+
+    @PostMapping("/rendered-templates")
+    @Operation(
+            summary = "Send rendered template email",
+            description = "Render a built-in HTML email template with dynamic variables and send it. " +
+                    "Available templates: WELCOME, SET_PASSWORD, RESET_PASSWORD."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Email accepted for delivery"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "502", description = "Email provider error"),
+            @ApiResponse(responseCode = "503", description = "Email provider not configured")
+    })
+    public ResponseEntity<CommunicationAcceptedResource> sendRenderedTemplateEmail(
+            @Valid @RequestBody SendRenderedTemplateEmailResource resource
+    ) {
+        var command = SendRenderedTemplateEmailCommandFromResourceAssembler.toCommandFromResource(resource);
+        emailNotificationCommandService.handle(command);
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(new CommunicationAcceptedResource("Rendered template email accepted for delivery"));
     }
 }

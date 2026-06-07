@@ -2,7 +2,6 @@ package com.metasoft.veyra.platform.communication.interfaces.rest;
 
 import com.metasoft.veyra.platform.communication.domain.services.ConversationCommandService;
 import com.metasoft.veyra.platform.communication.domain.services.ConversationQueryService;
-import com.metasoft.veyra.platform.communication.interfaces.rest.resources.ConversationResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.resources.ConversationSummaryResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.resources.UnreadConversationCountResource;
 import com.metasoft.veyra.platform.communication.interfaces.rest.transform.ConversationAssembler;

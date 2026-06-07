@@ -6,6 +6,7 @@ import com.metasoft.veyra.platform.communication.domain.model.commands.SendHtmlE
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPlainEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPushNotificationCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPushNotificationToUserCommand;
+import com.metasoft.veyra.platform.communication.domain.model.commands.SendRenderedTemplateEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendTemplateEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.UnregisterUserPushTokenCommand;
 import com.metasoft.veyra.platform.communication.domain.model.valueobjects.EmailRecipients;
@@ -18,6 +19,8 @@ import com.metasoft.veyra.platform.communication.domain.services.PushNotificatio
 import com.metasoft.veyra.platform.communication.domain.services.UserNotificationCommandService;
 import com.metasoft.veyra.platform.communication.domain.services.UserPushTokenCommandService;
 import com.metasoft.veyra.platform.communication.interfaces.acl.CommunicationContextFacade;
+import com.metasoft.veyra.platform.shared.domain.model.valueobjetcs.EmailTemplate;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -52,7 +55,7 @@ public class CommunicationContextFacadeImpl implements CommunicationContextFacad
                 new SendPlainEmailCommand(new EmailRecipients(recipients), subject, plainContent)
         );
     }
-
+    
     @Override
     public void sendHtmlEmail(List<String> recipients, String subject, String htmlContent, String plainContent) {
         emailNotificationCommandService.handle(
@@ -98,5 +101,12 @@ public class CommunicationContextFacadeImpl implements CommunicationContextFacad
         var result = conversationCommandService.handle(
                 new CreateConversationCommand(List.of(userIdA, userIdB), ConversationType.DIRECT, null));
         return result.conversationId();
+    }
+
+    @Override
+    public void sendRenderedTemplateEmail(List<String> recipients, String subject, EmailTemplate template, Map<String, String> variables) {
+        emailNotificationCommandService.handle(
+                new SendRenderedTemplateEmailCommand(new EmailRecipients(recipients), subject, template, variables)
+        );
     }
 }
