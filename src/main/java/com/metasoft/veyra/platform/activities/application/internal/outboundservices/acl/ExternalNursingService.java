@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 /**
  * ACL service that wraps the NursingContextFacade for use within the activities bounded context.
  */
-@Service
+@Service("activitiesExternalNursingService")
 public class ExternalNursingService {
 
     private final NursingContextFacade nursingContextFacade;
