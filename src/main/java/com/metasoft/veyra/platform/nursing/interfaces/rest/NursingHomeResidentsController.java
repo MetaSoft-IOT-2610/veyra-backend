@@ -1,13 +1,18 @@
 package com.metasoft.veyra.platform.nursing.interfaces.rest;
 
+import com.metasoft.veyra.platform.nursing.domain.exceptions.NursingHomeNotFoundException;
+import com.metasoft.veyra.platform.nursing.domain.exceptions.ResidentNotBelongToNursingHomeException;
+import com.metasoft.veyra.platform.nursing.domain.exceptions.ResidentNotFoundException;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.ExistsByNursingHomeIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.GetAllResidentsByNursingHomeIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.GetResidentByIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.services.NursingHomeQueryServices;
 import com.metasoft.veyra.platform.nursing.domain.services.ResidentCommandServices;
 import com.metasoft.veyra.platform.nursing.domain.services.ResidentQueryServices;
+import com.metasoft.veyra.platform.nursing.interfaces.rest.resources.AssignedStaffToResidentResource;
 import com.metasoft.veyra.platform.nursing.interfaces.rest.resources.CreateResidentResource;
 import com.metasoft.veyra.platform.nursing.interfaces.rest.resources.ResidentResource;
+import com.metasoft.veyra.platform.nursing.interfaces.rest.transform.AssignedStaffToResidentCommandFromResourceAssembler;
 import com.metasoft.veyra.platform.nursing.interfaces.rest.transform.CreateResidentCommandFromResourceAssembler;
 import com.metasoft.veyra.platform.nursing.interfaces.rest.transform.ResidentResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,10 +22,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -38,14 +45,14 @@ public class NursingHomeResidentsController {
         this.nursingHomeQueryServices = nursingHomeQueryServices;
     }
 
-    @PostMapping
+    @PostMapping( consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Create a new resident in a nursing home")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",description = "Resident created"),
             @ApiResponse(responseCode = "400",description = "Bad request")
     })
     @Parameter(name = "nursingHomeId", description = "The unique identifier of the nursing home", required = true)
-    public ResponseEntity<ResidentResource> createResident(@Valid @RequestBody CreateResidentResource resource, @PathVariable Long nursingHomeId)
+    public ResponseEntity<ResidentResource> createResident(@Valid @ModelAttribute CreateResidentResource resource, @PathVariable Long nursingHomeId)
     {
         var residentCommand= CreateResidentCommandFromResourceAssembler.toCommandFromResource(resource,nursingHomeId);
         var residentId= residentCommandServices.handle(residentCommand);
@@ -79,5 +86,29 @@ public class NursingHomeResidentsController {
 
         return ResponseEntity.ok(residentResources);
     }
-}
 
+    @PutMapping("/{residentId}/staff")
+    @Operation(summary = "Assign a staff member to a resident")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Staff member assigned successfully"),
+            @ApiResponse(responseCode = "400", description = "Bad request"),
+            @ApiResponse(responseCode = "404", description = "Nursing home or resident not found, or staff member not found/invalid"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<Void> assignStaffToResident(
+            @PathVariable Long nursingHomeId,
+            @PathVariable Long residentId,
+            @Valid @RequestBody AssignedStaffToResidentResource resource) {
+        try {
+            var command = AssignedStaffToResidentCommandFromResourceAssembler.toCommandFromResource(nursingHomeId, residentId, resource);
+            residentCommandServices.handle(command);
+            return ResponseEntity.ok().build();
+        } catch (NursingHomeNotFoundException | ResidentNotFoundException | NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        } catch (ResidentNotBelongToNursingHomeException e) {
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+}

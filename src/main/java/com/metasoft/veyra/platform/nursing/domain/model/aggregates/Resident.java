@@ -5,16 +5,14 @@ import com.metasoft.veyra.platform.nursing.domain.model.valueobjects.*;
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 
 @Entity
 @Getter
+@Setter
 public class Resident extends AuditableAbstractAggregateRoot<Resident> {
-    protected Resident() {
-        super(); this.relative=null;
-    }
-
     @Embedded
     private PersonProfileId personProfileId;
     @Embedded
@@ -46,20 +44,16 @@ public class Resident extends AuditableAbstractAggregateRoot<Resident> {
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
-    @ManyToOne
-    @JoinColumn(name = "relative_id")
-    private Relative relative;
 
     public Resident(Long personProfileId, String legalRepresentativeFirstName, String legalRepresentativeLastName, String legalRepresentativePhoneNumber
             , String emergencyContactFirstName, String emergencyContactLastName, String emergencyContactPhoneNumber) {
-        this();
         this.personProfileId = new PersonProfileId(personProfileId);
         this.legalRepresentative = new LegalRepresentative(legalRepresentativeFirstName, legalRepresentativeLastName, legalRepresentativePhoneNumber);
         this.emergencyContact = new EmergencyContact(emergencyContactFirstName, emergencyContactLastName, emergencyContactPhoneNumber);
     }
 
     public Resident(NursingHome nursingHome, PersonProfileId personProfileId, LegalRepresentative legalRepresentative, EmergencyContact emergencyContact) {
-        this();
+
         this.personProfileId = personProfileId;
         this.legalRepresentative = legalRepresentative;
         this.emergencyContact = emergencyContact;
@@ -124,6 +118,7 @@ public class Resident extends AuditableAbstractAggregateRoot<Resident> {
         this.room = null;
     }
 
+public Resident(){}
 
     public void activate() {
         if (this.residentStatus == ResidentState.ACTIVE) {
@@ -212,7 +207,4 @@ public class Resident extends AuditableAbstractAggregateRoot<Resident> {
     public void assignedStaffToResidentCommand(Long staffMemberId){
         this.staffMemberId=new StaffMemberId(staffMemberId);
     }
-public void assignedRelativeToResidentCommand(Relative relative){
-
-}
 }
