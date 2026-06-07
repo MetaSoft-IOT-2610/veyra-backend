@@ -21,4 +21,14 @@ public interface CommunicationContextFacade {
     Long sendPushNotificationToUser(Long userId, String title, String body);
 
     void markNotificationAsRead(Long userId, Long notificationId);
+
+    /**
+     * Creates a DIRECT conversation between two users, or returns the existing one
+     * if it already exists (idempotent).
+     *
+     * @param userIdA the first participant's user ID
+     * @param userIdB the second participant's user ID
+     * @return the conversation ID (new or existing)
+     */
+    Long getOrCreateDirectConversation(Long userIdA, Long userIdB);
 }

@@ -10,6 +10,9 @@ import com.metasoft.veyra.platform.communication.domain.model.commands.SendTempl
 import com.metasoft.veyra.platform.communication.domain.model.commands.UnregisterUserPushTokenCommand;
 import com.metasoft.veyra.platform.communication.domain.model.valueobjects.EmailRecipients;
 import com.metasoft.veyra.platform.communication.domain.model.valueobjects.PushPlatform;
+import com.metasoft.veyra.platform.communication.domain.model.commands.CreateConversationCommand;
+import com.metasoft.veyra.platform.communication.domain.model.valueobjects.ConversationType;
+import com.metasoft.veyra.platform.communication.domain.services.ConversationCommandService;
 import com.metasoft.veyra.platform.communication.domain.services.EmailNotificationCommandService;
 import com.metasoft.veyra.platform.communication.domain.services.PushNotificationCommandService;
 import com.metasoft.veyra.platform.communication.domain.services.UserNotificationCommandService;
@@ -27,17 +30,20 @@ public class CommunicationContextFacadeImpl implements CommunicationContextFacad
     private final PushNotificationCommandService pushNotificationCommandService;
     private final UserPushTokenCommandService userPushTokenCommandService;
     private final UserNotificationCommandService userNotificationCommandService;
+    private final ConversationCommandService conversationCommandService;
 
     public CommunicationContextFacadeImpl(
             EmailNotificationCommandService emailNotificationCommandService,
             PushNotificationCommandService pushNotificationCommandService,
             UserPushTokenCommandService userPushTokenCommandService,
-            UserNotificationCommandService userNotificationCommandService
+            UserNotificationCommandService userNotificationCommandService,
+            ConversationCommandService conversationCommandService
     ) {
         this.emailNotificationCommandService = emailNotificationCommandService;
         this.pushNotificationCommandService = pushNotificationCommandService;
         this.userPushTokenCommandService = userPushTokenCommandService;
         this.userNotificationCommandService = userNotificationCommandService;
+        this.conversationCommandService = conversationCommandService;
     }
 
     @Override
@@ -85,5 +91,12 @@ public class CommunicationContextFacadeImpl implements CommunicationContextFacad
     @Override
     public void markNotificationAsRead(Long userId, Long notificationId) {
         userNotificationCommandService.handle(new MarkNotificationAsReadCommand(userId, notificationId));
+    }
+
+    @Override
+    public Long getOrCreateDirectConversation(Long userIdA, Long userIdB) {
+        var result = conversationCommandService.handle(
+                new CreateConversationCommand(List.of(userIdA, userIdB), ConversationType.DIRECT, null));
+        return result.conversationId();
     }
 }
