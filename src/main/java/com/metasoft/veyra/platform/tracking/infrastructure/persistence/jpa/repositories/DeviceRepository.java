@@ -14,6 +14,7 @@ public interface DeviceRepository extends JpaRepository<Device,Long>
     Optional<Device> findByDeviceId(String deviceId);
     List<Device> findAllByStatus(AssignmentStatus status);
     List<Device> findAllByResidentId(Long residentId);
+    List<Device> findAllByNursingHomeId(Long nursingHomeId);
     boolean existsByDeviceId(String deviceId);
     Optional<Device> findByDeviceIdAndStatus(String deviceId, AssignmentStatus status);
 }
