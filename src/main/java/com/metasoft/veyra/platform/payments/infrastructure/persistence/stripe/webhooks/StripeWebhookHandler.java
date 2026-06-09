@@ -7,10 +7,12 @@ import com.stripe.model.Subscription;
 import com.stripe.net.Webhook;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(name = "integrations.stripe.enabled", havingValue = "true")
 public class StripeWebhookHandler {
 
     @Value("${stripe.webhook.secret}")
