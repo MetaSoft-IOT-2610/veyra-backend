@@ -2,6 +2,7 @@ package com.metasoft.veyra.platform.tracking.domain.model.aggregates;
 
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.AssignmentStatus;
+import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.DeviceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -21,7 +23,9 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
 
     private Long residentId;
 
-    @Column(length = 100,nullable = false)
+    private Long nursingHomeId;
+
+    @Column(length = 100)
     private String assignedBy;
 
     @Column(nullable = false)
@@ -31,12 +35,16 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
     @Column(nullable = false, length = 20)
     private AssignmentStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private DeviceType deviceType;
+
     protected Device() {}
 
     public Device(String deviceId) {
         this.deviceId = deviceId;
         this.residentId = null;
-        this.assignedBy = null;
+        this.assignedBy = "";
         this.assignedAt = LocalDateTime.now();
         this.status = AssignmentStatus.UNASSIGNED;
     }
@@ -47,6 +55,15 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
         this.assignedBy = assignedBy;
         this.assignedAt = LocalDateTime.now();
         this.status = AssignmentStatus.ACTIVE;
+    }
+
+    public Device(Long nursingHomeId, DeviceType deviceType, String macAddress) {
+        this.deviceId = macAddress;
+        this.nursingHomeId = nursingHomeId;
+        this.deviceType = deviceType;
+        this.assignedBy = "";
+        this.assignedAt = LocalDateTime.now();
+        this.status = AssignmentStatus.UNASSIGNED;
     }
 
     public void assignToResident(Long residentId, String assignedBy) {
@@ -60,6 +77,10 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
         this.residentId = null;
         this.assignedBy = null;
         this.status = AssignmentStatus.UNASSIGNED;
+    }
+
+    public void updateType(DeviceType deviceType) {
+        this.deviceType = deviceType;
     }
 
     public void deactivate() {
