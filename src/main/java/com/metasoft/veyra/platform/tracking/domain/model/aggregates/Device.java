@@ -1,32 +1,24 @@
 package com.metasoft.veyra.platform.tracking.domain.model.aggregates;
 
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
-import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.AssignmentStatus;
-import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.DeviceType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.*;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
 public class Device extends AuditableAbstractAggregateRoot<Device> {
+    @Embedded
+    private MacAddress macAddress;
+@Embedded
+    private ResidentId residentId;
+@Embedded
+    private NursingHomeId nursingHomeId;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String deviceId;
-
-    private Long residentId;
-
-    private Long nursingHomeId;
-
-    @Column(length = 100)
-    private String assignedBy;
 
     @Column(nullable = false)
     private LocalDateTime assignedAt;
@@ -39,55 +31,51 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
     @Column(length = 20)
     private DeviceType deviceType;
 
-    protected Device() {}
+    public Device() {}
 
-    public Device(String deviceId) {
-        this.deviceId = deviceId;
+    public Device(String macAddress) {
+        this.macAddress = new MacAddress(macAddress);
         this.residentId = null;
-        this.assignedBy = "";
         this.assignedAt = LocalDateTime.now();
-        this.status = AssignmentStatus.UNASSIGNED;
+        this.status = AssignmentStatus.AVAILABLE;
     }
 
-    public Device(String deviceId, Long residentId, String assignedBy) {
-        this.deviceId = deviceId;
-        this.residentId = residentId;
-        this.assignedBy = assignedBy;
+    public Device(String macAddress, Long residentId) {
+        this.macAddress = new MacAddress(macAddress);
+        this.residentId = new ResidentId(residentId);
         this.assignedAt = LocalDateTime.now();
-        this.status = AssignmentStatus.ACTIVE;
+        this.status = AssignmentStatus.AVAILABLE;
     }
 
-    public Device(Long nursingHomeId, DeviceType deviceType, String macAddress) {
-        this.deviceId = macAddress;
-        this.nursingHomeId = nursingHomeId;
-        this.deviceType = deviceType;
-        this.assignedBy = "";
+    public Device(Long nursingHomeId, String deviceType, String macAddress) {
+        this.macAddress = new MacAddress(macAddress);
+        this.nursingHomeId =new NursingHomeId( nursingHomeId);
+        this.deviceType = DeviceType.valueOf(deviceType.toUpperCase());
         this.assignedAt = LocalDateTime.now();
-        this.status = AssignmentStatus.UNASSIGNED;
+        this.status = AssignmentStatus.AVAILABLE;
     }
 
-    public void assignToResident(Long residentId, String assignedBy) {
-        this.residentId = residentId;
-        this.assignedBy = assignedBy;
+    public void assignToResident(Long residentId) {
+        this.residentId = new ResidentId(residentId);
         this.assignedAt = LocalDateTime.now();
-        this.status = AssignmentStatus.ACTIVE;
+        this.status = AssignmentStatus.ASSIGNED;
     }
 
     public void unassign() {
         this.residentId = null;
-        this.assignedBy = null;
-        this.status = AssignmentStatus.UNASSIGNED;
+        this.status = AssignmentStatus.AVAILABLE;
     }
 
-    public void updateType(DeviceType deviceType) {
-        this.deviceType = deviceType;
+    public void updateDevice(String deviceType,String macAddress) {
+        this.deviceType = DeviceType.valueOf(deviceType.toUpperCase());
+        this.macAddress= new MacAddress(macAddress);
     }
 
     public void deactivate() {
-        this.status = AssignmentStatus.INACTIVE;
+        this.status = AssignmentStatus.UNAVAILABLE;
     }
 
     public boolean isAssigned() {
-        return this.residentId != null && this.status == AssignmentStatus.ACTIVE;
+        return this.residentId != null && this.status == AssignmentStatus.AVAILABLE;
     }
 }
