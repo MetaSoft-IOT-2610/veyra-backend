@@ -1,7 +1,7 @@
 package com.metasoft.veyra.platform.tracking.interfaces.rest;
-
-import com.metasoft.veyra.platform.tracking.domain.model.queries.GetAllDevicesQuery;
+import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDeviceByIdQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDevicesByNursingHomeIdQuery;
+import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.NursingHomeId;
 import com.metasoft.veyra.platform.tracking.domain.services.DeviceCommandService;
 import com.metasoft.veyra.platform.tracking.domain.services.DeviceQueryService;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.DeviceResource;
@@ -21,13 +21,13 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(value = "/api/v1/nursing-homes/{nursingHomeId}/devices", produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Nursing Homes")
-public class NursingHomeTrackingDevicesController {
+public class NursingHomesDevicesController {
 
     private final DeviceCommandService deviceCommandService;
     private final DeviceQueryService deviceQueryService;
 
-    public NursingHomeTrackingDevicesController(DeviceCommandService deviceCommandService,
-                                                DeviceQueryService deviceQueryService) {
+    public NursingHomesDevicesController(DeviceCommandService deviceCommandService,
+                                         DeviceQueryService deviceQueryService) {
         this.deviceCommandService = deviceCommandService;
         this.deviceQueryService = deviceQueryService;
     }
@@ -35,7 +35,8 @@ public class NursingHomeTrackingDevicesController {
     @GetMapping
     @Operation(summary = "Get all tracking devices for a nursing home")
     public ResponseEntity<DevicesListResource> getDevicesByNursingHome(@PathVariable Long nursingHomeId) {
-        var devices = deviceQueryService.handle(new GetDevicesByNursingHomeIdQuery(nursingHomeId))
+        var nursingHome=new NursingHomeId(nursingHomeId);
+        var devices = deviceQueryService.handle(new GetDevicesByNursingHomeIdQuery(nursingHome))
                 .stream()
                 .map(DeviceResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -47,11 +48,13 @@ public class NursingHomeTrackingDevicesController {
     public ResponseEntity<DeviceResource> registerDevice(@PathVariable Long nursingHomeId,
                                                          @Valid @RequestBody RegisterDeviceResource resource) {
         var command = RegisterDeviceCommandFromResourceAssembler.toCommandFromResource(resource, nursingHomeId);
-        var numericId = deviceCommandService.handle(command);
-        if (numericId == null || numericId == 0L) return ResponseEntity.badRequest().build();
-        var device = deviceQueryService.handle(new GetAllDevicesQuery())
-                .stream().filter(d -> d.getId().equals(numericId)).findFirst();
-        if (device.isEmpty()) return ResponseEntity.notFound().build();
-        return new ResponseEntity<>(DeviceResourceFromEntityAssembler.toResourceFromEntity(device.get()), HttpStatus.CREATED);
+        var deviceId = deviceCommandService.handle(command);
+        if (deviceId == null || deviceId == 0L) return ResponseEntity.badRequest().build();
+        var getDevicesIdQuery= new GetDeviceByIdQuery(deviceId);
+        var device= deviceQueryService.handle(getDevicesIdQuery);
+        if (device.isEmpty()){return ResponseEntity.notFound().build();}
+        var deviceEntity= device.get();
+        var deviceResource= DeviceResourceFromEntityAssembler.toResourceFromEntity(deviceEntity);
+        return new ResponseEntity<>(deviceResource,HttpStatus.CREATED);
     }
 }

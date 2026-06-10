@@ -1,16 +1,16 @@
 package com.metasoft.veyra.platform.tracking.interfaces.rest;
-
 import com.metasoft.veyra.platform.tracking.domain.model.commands.AssignDeviceCommand;
 import com.metasoft.veyra.platform.tracking.domain.model.commands.ChangeDeviceStatusCommand;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetAllDevicesQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDeviceByIdQuery;
-import com.metasoft.veyra.platform.tracking.domain.model.queries.GetUnassignedDevicesQuery;
 import com.metasoft.veyra.platform.tracking.domain.services.DeviceCommandService;
 import com.metasoft.veyra.platform.tracking.domain.services.DeviceQueryService;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.AssignDeviceResource;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.ChangeDeviceStatusResource;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.DeviceResource;
+import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.RegisterDeviceResource;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.transform.DeviceResourceFromEntityAssembler;
+import com.metasoft.veyra.platform.tracking.interfaces.rest.transform.UpdateDeviceCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -47,24 +47,13 @@ public class DevicesController {
     }
 
     @GetMapping("/{deviceId}")
-    @Operation(summary = "Get device by MAC address")
-    public ResponseEntity<DeviceResource> getDeviceById(@PathVariable String deviceId) {
+    @Operation(summary = "Get device by id")
+    public ResponseEntity<DeviceResource> getDeviceById(@PathVariable Long deviceId) {
         var device = deviceQueryService.handle(new GetDeviceByIdQuery(deviceId));
         return device.map(DeviceResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-    @GetMapping("/unassigned")
-    @Operation(summary = "Get all unassigned devices")
-    public ResponseEntity<List<DeviceResource>> getUnassignedDevices() {
-        var devices = deviceQueryService.handle(new GetUnassignedDevicesQuery());
-        var resources = devices.stream()
-                .map(DeviceResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
-    }
-
     @PostMapping("/{deviceId}/assignments")
     @Operation(summary = "Assign device to resident")
     public ResponseEntity<DeviceResource> assignDevice(@PathVariable Long deviceId,
@@ -74,7 +63,7 @@ public class DevicesController {
                 .orElse(null);
         if (device == null) return ResponseEntity.notFound().build();
 
-        var command = new AssignDeviceCommand(device.getDeviceId(), resource.residentId(), resource.assignedBy());
+        var command = new AssignDeviceCommand(device.getId(), resource.residentId());
         deviceCommandService.handle(command);
 
         var updated = deviceQueryService.handle(new GetAllDevicesQuery()).stream()
@@ -92,7 +81,7 @@ public class DevicesController {
                 .orElse(null);
         if (device == null) return ResponseEntity.notFound().build();
 
-        deviceCommandService.handle(new com.metasoft.veyra.platform.tracking.domain.model.commands.UnassignDeviceCommand(device.getDeviceId()));
+        deviceCommandService.handle(new com.metasoft.veyra.platform.tracking.domain.model.commands.UnassignDeviceCommand(device.getId()));
         return ResponseEntity.ok().build();
     }
 
@@ -106,5 +95,17 @@ public class DevicesController {
         return updated.map(DeviceResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{deviceId}")
+    @Operation(summary = "Update the type of a tracking device")
+    public ResponseEntity<DeviceResource> updateDevice(@PathVariable Long deviceId,
+                                                       @Valid @RequestBody RegisterDeviceResource resource) {
+        var command = UpdateDeviceCommandFromResourceAssembler.toCommandFromResource(deviceId, resource);
+        var updatedId = deviceCommandService.handle(command);
+        var device = deviceQueryService.handle(new GetAllDevicesQuery())
+                .stream().filter(d -> d.getId().equals(updatedId)).findFirst();
+        if (device.isEmpty()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(DeviceResourceFromEntityAssembler.toResourceFromEntity(device.get()));
     }
 }

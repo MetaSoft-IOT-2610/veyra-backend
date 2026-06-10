@@ -4,7 +4,7 @@ import com.metasoft.veyra.platform.tracking.domain.model.aggregates.Device;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetAllDevicesQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDeviceByIdQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDevicesByNursingHomeIdQuery;
-import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDevicesByResidentQuery;
+import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDevicesByResidentIdQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetUnassignedDevicesQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.AssignmentStatus;
 import com.metasoft.veyra.platform.tracking.domain.services.DeviceQueryService;
@@ -30,17 +30,17 @@ public class DeviceQueryServiceImpl implements DeviceQueryService {
 
     @Override
     public Optional<Device> handle(GetDeviceByIdQuery query) {
-        return deviceRepository.findByDeviceId(query.deviceId());
+        return deviceRepository.findById(query.deviceId());
     }
 
     @Override
-    public List<Device> handle(GetDevicesByResidentQuery query) {
+    public List<Device> handle(GetDevicesByResidentIdQuery query) {
         return deviceRepository.findAllByResidentId(query.residentId());
     }
 
     @Override
     public List<Device> handle(GetUnassignedDevicesQuery query) {
-        return deviceRepository.findAllByStatus(AssignmentStatus.UNASSIGNED);
+        return deviceRepository.findAllByStatus(AssignmentStatus.UNAVAILABLE);
     }
 
     @Override
