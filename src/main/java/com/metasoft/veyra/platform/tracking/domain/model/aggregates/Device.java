@@ -19,8 +19,7 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
 @Embedded
     private NursingHomeId nursingHomeId;
 
-
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime assignedAt;
 
     @Enumerated(EnumType.STRING)
@@ -33,37 +32,33 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
 
     public Device() {}
 
-    public Device(String macAddress) {
-        this.macAddress = new MacAddress(macAddress);
-        this.residentId = null;
-        this.assignedAt = LocalDateTime.now();
-        this.status = AssignmentStatus.AVAILABLE;
-    }
-
-    public Device(String macAddress, Long residentId) {
-        this.macAddress = new MacAddress(macAddress);
-        this.residentId = new ResidentId(residentId);
-        this.assignedAt = LocalDateTime.now();
-        this.status = AssignmentStatus.AVAILABLE;
-    }
-
     public Device(Long nursingHomeId, String deviceType, String macAddress) {
         this.macAddress = new MacAddress(macAddress);
         this.nursingHomeId =new NursingHomeId( nursingHomeId);
         this.deviceType = DeviceType.valueOf(deviceType.toUpperCase());
-        this.assignedAt = LocalDateTime.now();
+        this.assignedAt = null;
         this.status = AssignmentStatus.AVAILABLE;
     }
 
     public void assignToResident(Long residentId) {
+        if (this.status!=AssignmentStatus.AVAILABLE){
+            throw new IllegalArgumentException("Only available devices can be assigned to a resident");
+
+        }
         this.residentId = new ResidentId(residentId);
         this.assignedAt = LocalDateTime.now();
         this.status = AssignmentStatus.ASSIGNED;
     }
 
     public void unassign() {
+        if (this.status != AssignmentStatus.ASSIGNED) {
+            throw new IllegalStateException(
+                    "Only assigned devices can be unassigned");
+        }
+
         this.residentId = null;
         this.status = AssignmentStatus.AVAILABLE;
+        this.assignedAt=null;
     }
 
     public void updateDevice(String deviceType,String macAddress) {
@@ -71,11 +66,28 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
         this.macAddress= new MacAddress(macAddress);
     }
 
-    public void deactivate() {
-        this.status = AssignmentStatus.UNAVAILABLE;
+    public void changeStatus(String newStatus) {
+
+        var status = AssignmentStatus.valueOf(newStatus.toUpperCase());
+
+        if (this.status == AssignmentStatus.ASSIGNED) {
+            throw new IllegalArgumentException(
+                    "Assigned devices must be unassigned before changing status");
+        }
+
+        if (status == AssignmentStatus.ASSIGNED) {
+            throw new IllegalArgumentException(
+                    "Use assignToResident() to assign a device");
+        }
+        if (this.status == status) {
+            throw new IllegalArgumentException(
+                    "Device already has status " + status);
+        }
+        this.status = status;
     }
 
     public boolean isAssigned() {
-        return this.residentId != null && this.status == AssignmentStatus.AVAILABLE;
+        return this.residentId != null
+                && this.status == AssignmentStatus.ASSIGNED;
     }
 }
