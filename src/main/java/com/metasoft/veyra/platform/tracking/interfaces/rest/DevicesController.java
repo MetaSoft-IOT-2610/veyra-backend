@@ -1,6 +1,7 @@
 package com.metasoft.veyra.platform.tracking.interfaces.rest;
 import com.metasoft.veyra.platform.tracking.domain.model.commands.AssignDeviceCommand;
 import com.metasoft.veyra.platform.tracking.domain.model.commands.ChangeDeviceStatusCommand;
+import com.metasoft.veyra.platform.tracking.domain.model.commands.UnassignDeviceCommand;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetAllDevicesQuery;
 import com.metasoft.veyra.platform.tracking.domain.model.queries.GetDeviceByIdQuery;
 import com.metasoft.veyra.platform.tracking.domain.services.DeviceCommandService;
@@ -12,6 +13,9 @@ import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.RegisterDe
 import com.metasoft.veyra.platform.tracking.interfaces.rest.transform.DeviceResourceFromEntityAssembler;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.transform.UpdateDeviceCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,11 +23,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping(value = "/api/v1/devices", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/devices",  produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Devices", description = "IoT Device Management")
 public class DevicesController {
 
@@ -75,14 +80,18 @@ public class DevicesController {
 
     @DeleteMapping("/{deviceId}/assignments")
     @Operation(summary = "Unassign device from resident")
-    public ResponseEntity<Void> unassignDevice(@PathVariable Long deviceId) {
-        var device = deviceQueryService.handle(new GetAllDevicesQuery()).stream()
-                .filter(d -> d.getId().equals(deviceId)).findFirst()
-                .orElse(null);
-        if (device == null) return ResponseEntity.notFound().build();
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "unassign device"),
+            @ApiResponse(responseCode = "404", description = "device not found")})
 
-        deviceCommandService.handle(new com.metasoft.veyra.platform.tracking.domain.model.commands.UnassignDeviceCommand(device.getId()));
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> unassignDevice(@PathVariable             @Parameter(description = "Unique course identifier", example = "1", required = true)
+                                                Long deviceId
+    ) {
+        var unassignDeviceCommand= new UnassignDeviceCommand(deviceId);
+        deviceCommandService.handle(unassignDeviceCommand);
+        return ResponseEntity.ok(
+                Map.of("message", "Device successfully unassigned")
+        );
     }
 
     @PatchMapping("/{deviceId}/status")

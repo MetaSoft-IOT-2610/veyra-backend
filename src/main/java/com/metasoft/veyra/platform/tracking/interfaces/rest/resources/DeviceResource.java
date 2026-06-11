@@ -7,6 +7,6 @@ public record DeviceResource(Long id,
                              String deviceType,
                              String status,
                              Long residentId,
-                             LocalDateTime lastSync,
+                             LocalDateTime assignedAt,
                              String macAddress) {
 }
