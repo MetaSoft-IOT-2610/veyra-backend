@@ -9,6 +9,9 @@ import com.metasoft.veyra.platform.nursing.domain.services.ResidentQueryServices
 import com.metasoft.veyra.platform.nursing.interfaces.acl.NursingContextFacade;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @Service
 
 public class NursingContextFacadeImpl implements NursingContextFacade {
@@ -39,5 +42,11 @@ public class NursingContextFacadeImpl implements NursingContextFacade {
         var findResidentById= new GetResidentByIdQuery(residentId);
         var resident= residentQueryServices.handle(findResidentById);
         return resident.isEmpty()?Long.valueOf(0L):resident.get().getId();
+    }
+    @Override
+    public Optional<LocalDate> fetchNursingHomeCreatedAtById(Long id) {
+        var query = new GetNursingHomeByIdQuery(id);
+        var nursingHome = nursingHomeQueryServices.handle(query);
+        return nursingHome.map(home -> home.getCreatedAt().toLocalDate());
     }
 }
