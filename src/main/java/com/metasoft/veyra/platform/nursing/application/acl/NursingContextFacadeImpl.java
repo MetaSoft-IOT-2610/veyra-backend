@@ -1,9 +1,11 @@
 package com.metasoft.veyra.platform.nursing.application.acl;
 
+import com.metasoft.veyra.platform.hcm.domain.services.StaffQueryServices;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.GetAdministratorByUserIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.GetNursingHomeByIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.GetResidentByIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.model.queries.GetResidentByPersonProfileQuery;
+import com.metasoft.veyra.platform.nursing.domain.model.queries.GetStaffByUserIdQuery;
 import com.metasoft.veyra.platform.nursing.domain.model.valueobjects.PersonProfileId;
 import com.metasoft.veyra.platform.nursing.domain.services.AdministratorQueryService;
 import com.metasoft.veyra.platform.nursing.domain.services.NursingHomeQueryServices;
@@ -17,10 +19,13 @@ public class NursingContextFacadeImpl implements NursingContextFacade {
   private final NursingHomeQueryServices nursingHomeQueryServices;
   private final ResidentQueryServices residentQueryServices;
   private final AdministratorQueryService administratorQueryService;
-  public NursingContextFacadeImpl(NursingHomeQueryServices nursingHomeQueryServices, ResidentQueryServices residentQueryServices, AdministratorQueryService administratorQueryService) {
+  private final StaffQueryServices staffQueryServices;
+
+  public NursingContextFacadeImpl(NursingHomeQueryServices nursingHomeQueryServices, ResidentQueryServices residentQueryServices, AdministratorQueryService administratorQueryService, StaffQueryServices staffQueryServices) {
     this.nursingHomeQueryServices = nursingHomeQueryServices;
     this.residentQueryServices = residentQueryServices;
     this.administratorQueryService = administratorQueryService;
+    this.staffQueryServices = staffQueryServices;
   }
 
   @Override
@@ -50,5 +55,12 @@ public class NursingContextFacadeImpl implements NursingContextFacade {
     var administrator= administratorQueryService.handle(findAdministratorByUserId);
     return administrator.isEmpty()?Long.valueOf(0L):administrator.get().getId();
 
+  }
+
+  @Override
+  public Long fetchStaffByUserId(Long userId) {
+    var getStaffByUserIdQuery = new GetStaffByUserIdQuery(userId);
+    var staff = staffQueryServices.handle(getStaffByUserIdQuery);
+    return staff.isEmpty() ? 0L : staff.get().getId();
   }
 }
