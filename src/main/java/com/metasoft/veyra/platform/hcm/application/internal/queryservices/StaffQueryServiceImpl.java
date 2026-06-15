@@ -3,8 +3,10 @@ package com.metasoft.veyra.platform.hcm.application.internal.queryservices;
 import com.metasoft.veyra.platform.hcm.domain.model.aggregates.Staff;
 import com.metasoft.veyra.platform.hcm.domain.model.entities.Contract;
 import com.metasoft.veyra.platform.hcm.domain.model.queries.*;
+import com.metasoft.veyra.platform.hcm.domain.model.valueobjects.UserId;
 import com.metasoft.veyra.platform.hcm.domain.services.StaffQueryServices;
 import com.metasoft.veyra.platform.hcm.infrastructure.persistence.jpa.repositories.StaffRepository;
+import com.metasoft.veyra.platform.nursing.domain.model.queries.GetStaffByUserIdQuery;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -88,5 +90,10 @@ public class StaffQueryServiceImpl implements StaffQueryServices {
                                 "NURSE".equals(contract.getStaffRole().name()) &&
                                 contract.isActive()))
                 .or(Optional::empty);
+    }
+
+    @Override
+    public Optional<Staff> handle(GetStaffByUserIdQuery query) {
+        return staffRepository.findByUserId(new UserId(query.userId()));
     }
 }

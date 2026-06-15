@@ -6,7 +6,9 @@ import com.metasoft.veyra.platform.iam.application.internal.outboundservices.tok
 import com.metasoft.veyra.platform.iam.domain.model.aggregates.User;
 import com.metasoft.veyra.platform.iam.domain.model.commands.SignInCommand;
 import com.metasoft.veyra.platform.iam.domain.model.commands.SignUpCommand;
+import com.metasoft.veyra.platform.iam.domain.model.entities.Role;
 import com.metasoft.veyra.platform.iam.domain.model.valueobjects.EntityId;
+import com.metasoft.veyra.platform.iam.domain.model.valueobjects.Roles;
 import com.metasoft.veyra.platform.iam.domain.services.UserCommandService;
 import com.metasoft.veyra.platform.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.metasoft.veyra.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
@@ -36,6 +38,7 @@ public class UserCommandServiceImpl implements UserCommandService {
    * @param userRepository the user repository
    * @param hashingService the hashing service
    * @param tokenService the token service
+   * @param externalNursingService the external nursing service
    * @param roleRepository the role repository
    */
   public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService, ExternalNursingService externalNursingService, RoleRepository roleRepository) {
@@ -63,9 +66,18 @@ public class UserCommandServiceImpl implements UserCommandService {
     if (!hashingService.matches(command.password(), user.get().getPassword()))
       throw new RuntimeException("Invalid password");
     var token = tokenService.generateToken(user.get().getUsername());
-    var entityId = externalNursingService.fetchEntityId(user.get().getId())
-      .map(EntityId::entityId)
-      .orElse(null);
+
+    Long entityId = null;
+    if (user.get().getRoles().stream().anyMatch(role -> role.getName().equals(Roles.ROLE_ADMIN))) {
+      entityId = externalNursingService.fetchAdministratorEntityId(user.get().getId())
+        .map(EntityId::entityId)
+        .orElse(null);
+    } else if (user.get().getRoles().stream().anyMatch(role -> role.getName().equals(Roles.ROLE_DOCTOR))) {
+      entityId = externalNursingService.fetchStaffEntityId(user.get().getId())
+        .map(EntityId::entityId)
+        .orElse(null);
+    }
+
     return Optional.of(ImmutableTriple.of(user.get(), token, entityId));
   }
 

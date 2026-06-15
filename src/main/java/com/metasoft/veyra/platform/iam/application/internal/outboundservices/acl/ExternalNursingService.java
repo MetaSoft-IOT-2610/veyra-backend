@@ -11,8 +11,13 @@ public class ExternalNursingService {
   public ExternalNursingService(NursingContextFacade nursingContextFacade) {
     this.nursingContextFacade = nursingContextFacade;
   }
-  public Optional<EntityId> fetchEntityId(Long entityId){
-    var query = nursingContextFacade.fetchAdministratorByUserId(entityId);
+  public Optional<EntityId> fetchAdministratorEntityId(Long userId){
+    var query = nursingContextFacade.fetchAdministratorByUserId(userId);
+    return query==0L?Optional.empty():Optional.of(new EntityId(query));
+  }
+
+  public Optional<EntityId> fetchStaffEntityId(Long userId){
+    var query = nursingContextFacade.fetchStaffByUserId(userId);
     return query==0L?Optional.empty():Optional.of(new EntityId(query));
   }
 }
