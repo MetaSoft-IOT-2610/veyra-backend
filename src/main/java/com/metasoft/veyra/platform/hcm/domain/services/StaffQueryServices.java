@@ -18,4 +18,5 @@ public interface StaffQueryServices {
     List<Staff>handle(GetAllActiveStaffByContractWithNurseRoleByNursingHomeIdQuery query);
     Optional<Staff> handle(GetStaffMemberWithNurseRoleAndActiveContractQuery query);
     Optional<Staff> handle(GetStaffByUserIdQuery query);
+    Optional<Long> handle(GetNursingHomeByStaffIdQuery query); // Changed return type to Optional<Long>
 }

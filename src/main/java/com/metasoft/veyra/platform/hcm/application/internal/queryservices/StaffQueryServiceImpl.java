@@ -97,4 +97,10 @@ public class StaffQueryServiceImpl implements StaffQueryServices {
     public Optional<Staff> handle(GetStaffByUserIdQuery query) {
         return staffRepository.findByUserId(new UserId(query.userId()));
     }
+
+    @Override
+    public Optional<Long> handle(GetNursingHomeByStaffIdQuery query) {
+        return staffRepository.findById(query.staffId())
+                .map(staff -> staff.getNursingHomeId().nursingHomeId());
+    }
 }
