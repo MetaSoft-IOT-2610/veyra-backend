@@ -1,6 +1,7 @@
 package com.metasoft.veyra.platform.hcm.interfaces.rest;
 
 import com.metasoft.veyra.platform.hcm.domain.model.queries.GetNursingHomeByStaffIdQuery;
+import com.metasoft.veyra.platform.hcm.domain.model.queries.GetStaffByUserIdQuery;
 import com.metasoft.veyra.platform.hcm.domain.services.StaffCommandServices;
 import com.metasoft.veyra.platform.hcm.domain.services.StaffQueryServices;
 import com.metasoft.veyra.platform.hcm.interfaces.rest.resources.NursingHomeStaffResource;
@@ -60,6 +61,21 @@ public class StaffController {
         var getNursingHomeByStaffIdQuery = new GetNursingHomeByStaffIdQuery(staffMemberId);
         var nursingHomeId = staffQueryServices.handle(getNursingHomeByStaffIdQuery);
         return nursingHomeId.map(id -> new NursingHomeStaffResource(id, staffMemberId))
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/by-user/{userId}/nursing-homes")
+    @Operation(summary = "Get nursing home by user ID", description = "Get the nursing home associated with a user ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Nursing home found"),
+            @ApiResponse(responseCode = "404", description = "Nursing home not found for the given user ID")
+    })
+    public ResponseEntity<NursingHomeStaffResource> getNursingHomeByUserId(@PathVariable Long userId) {
+        var getStaffByUserIdQuery = new GetStaffByUserIdQuery(userId);
+        var staff = staffQueryServices.handle(getStaffByUserIdQuery);
+        return staff.filter(s -> s.getNursingHomeId() != null)
+                .map(s -> new NursingHomeStaffResource(s.getNursingHomeId().nursingHomeId(), s.getId()))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
