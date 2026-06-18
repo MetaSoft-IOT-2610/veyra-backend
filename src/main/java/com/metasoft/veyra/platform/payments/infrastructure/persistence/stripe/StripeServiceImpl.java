@@ -7,9 +7,9 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
 import com.stripe.param.*;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -18,6 +18,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@ConditionalOnProperty(name = "integrations.stripe.enabled", havingValue = "true")
 public class StripeServiceImpl implements StripeService {
 
     @Value("${stripe.api.key}")
@@ -25,12 +26,21 @@ public class StripeServiceImpl implements StripeService {
 
     private final Map<String, String> priceIds = new HashMap<>();
     private final Map<String, String> productIds = new HashMap<>();
+    private volatile boolean initialized;
 
-    @PostConstruct
-    public void init() {
-        Stripe.apiKey = stripeApiKey;
-        log.info("Initializing Stripe with API key");
-        initializePrices();
+    private void ensureInitialized() {
+        if (initialized) {
+            return;
+        }
+        synchronized (this) {
+            if (initialized) {
+                return;
+            }
+            Stripe.apiKey = stripeApiKey;
+            log.info("Initializing Stripe integration");
+            initializePrices();
+            initialized = true;
+        }
     }
 
     private void initializePrices() {
@@ -164,6 +174,7 @@ public class StripeServiceImpl implements StripeService {
 
     @Override
     public Customer createOrGetCustomer(Long userId, String email) {
+        ensureInitialized();
         try {
             log.info("Creating or retrieving customer for userId: {}", userId);
             CustomerSearchParams searchParams = CustomerSearchParams.builder()
@@ -200,6 +211,7 @@ public class StripeServiceImpl implements StripeService {
             PlanType planType,
             SubscriptionPeriod period,
             String paymentMethodId) {
+        ensureInitialized();
         try {
             log.info("Creating subscription for customer: {}, plan: {}, period: {}",
                     customerId, planType, period);
@@ -261,6 +273,7 @@ public class StripeServiceImpl implements StripeService {
             String subscriptionId,
             PlanType planType,
             SubscriptionPeriod period) {
+        ensureInitialized();
         try {
             log.info("Updating subscription: {} to plan: {}, period: {}",
                     subscriptionId, planType, period);
@@ -295,6 +308,7 @@ public class StripeServiceImpl implements StripeService {
 
     @Override
     public com.stripe.model.Subscription cancelSubscription(String subscriptionId) {
+        ensureInitialized();
         try {
             log.info("Canceling subscription: {}", subscriptionId);
 
@@ -313,6 +327,7 @@ public class StripeServiceImpl implements StripeService {
 
     @Override
     public com.stripe.model.Subscription retrieveSubscription(String subscriptionId) {
+        ensureInitialized();
         try {
             log.info("Retrieving subscription: {}", subscriptionId);
             return com.stripe.model.Subscription.retrieve(subscriptionId);
@@ -324,6 +339,7 @@ public class StripeServiceImpl implements StripeService {
 
     @Override
     public PaymentIntent createPaymentIntent(Long amountInCents, String currency, String customerId) {
+        ensureInitialized();
         try {
             log.info("Creating payment intent: amount={}, currency={}, customer={}",
                     amountInCents, currency, customerId);
@@ -352,6 +368,7 @@ public class StripeServiceImpl implements StripeService {
 
     @Override
     public PaymentIntent retrievePaymentIntent(String paymentIntentId) {
+        ensureInitialized();
         try {
             log.info("Retrieving payment intent: {}", paymentIntentId);
             return PaymentIntent.retrieve(paymentIntentId);
@@ -363,6 +380,7 @@ public class StripeServiceImpl implements StripeService {
 
     @Override
     public String getPriceId(PlanType planType, SubscriptionPeriod period) {
+        ensureInitialized();
         String key = planType.name() + "_" + period.name();
         String priceId = priceIds.get(key);
 

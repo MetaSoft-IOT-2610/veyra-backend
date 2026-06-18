@@ -3,12 +3,15 @@ package com.metasoft.veyra.platform.hcm.application.internal.queryservices;
 import com.metasoft.veyra.platform.hcm.domain.model.aggregates.Staff;
 import com.metasoft.veyra.platform.hcm.domain.model.entities.Contract;
 import com.metasoft.veyra.platform.hcm.domain.model.queries.*;
+import com.metasoft.veyra.platform.hcm.domain.model.valueobjects.UserId;
 import com.metasoft.veyra.platform.hcm.domain.services.StaffQueryServices;
 import com.metasoft.veyra.platform.hcm.infrastructure.persistence.jpa.repositories.StaffRepository;
+import com.metasoft.veyra.platform.hcm.domain.model.queries.GetStaffByUserIdQuery;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+
 @Service
 public class StaffQueryServiceImpl implements StaffQueryServices {
     private final StaffRepository staffRepository;
@@ -19,7 +22,7 @@ public class StaffQueryServiceImpl implements StaffQueryServices {
 
     @Override
     public Optional<Staff> handle(GetStaffByIdQuery query) {
-      return staffRepository.findById(query.id());
+        return staffRepository.findById(query.id());
     }
 
     @Override
@@ -64,8 +67,40 @@ public class StaffQueryServiceImpl implements StaffQueryServices {
 
     @Override
     public Optional<Contract> handle(GetLastAddedContractByStaffMemberIdQuery query) {
-        return staffRepository.findById(query.staffId()).map(staff->staff.getContractHistory().getLastAddedContract());
+        return staffRepository.findById(query.staffId()).map(staff -> staff.getContractHistory().getLastAddedContract());
     }
 
+    @Override
+    public List<Staff> handle(GetAllActiveStaffByContractWithNurseRoleByNursingHomeIdQuery query) {
+        return staffRepository.findByNursingHomeId(query.nursingHomeId())
+                .stream()
+                .filter(staff -> "ACTIVE".equals(staff.getStaffStatus().name()))
+                .filter(staff -> staff.getContractHistory().getAllContracts().stream()
+                        .anyMatch(contract -> contract.getStaffRole() != null &&
+                                "NURSE".equals(contract.getStaffRole().name())))
+                .toList();
+    }
 
+    @Override
+    public Optional<Staff> handle(GetStaffMemberWithNurseRoleAndActiveContractQuery query) {
+        return staffRepository.findById(query.staffId())
+                .filter(staff -> staff.getNursingHomeId().equals(query.nursingHomeId()))
+                .filter(staff -> "ACTIVE".equals(staff.getStaffStatus().name()))
+                .filter(staff -> staff.getContractHistory().getAllContracts().stream()
+                        .anyMatch(contract -> contract.getStaffRole() != null &&
+                                "NURSE".equals(contract.getStaffRole().name()) &&
+                                contract.isActive()))
+                .or(Optional::empty);
+    }
+
+    @Override
+    public Optional<Staff> handle(GetStaffByUserIdQuery query) {
+        return staffRepository.findByUserId(new UserId(query.userId()));
+    }
+
+    @Override
+    public Optional<Long> handle(GetNursingHomeByStaffIdQuery query) {
+        return staffRepository.findById(query.staffId())
+                .map(staff -> staff.getNursingHomeId().nursingHomeId());
+    }
 }

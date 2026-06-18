@@ -1,93 +1,107 @@
 package com.metasoft.veyra.platform.activities.domain.model.aggregates;
 
-
 import com.metasoft.veyra.platform.activities.domain.model.commands.CreateActivityCommand;
-import com.metasoft.veyra.platform.activities.domain.model.valueobjects.ActivityPeriod;
+import com.metasoft.veyra.platform.activities.domain.model.commands.UpdateActivityCommand;
 import com.metasoft.veyra.platform.activities.domain.model.valueobjects.ActivityStatus;
-import com.metasoft.veyra.platform.activities.domain.model.valueobjects.Area;
-import com.metasoft.veyra.platform.activities.domain.model.valueobjects.NursingHomeId;
-import com.metasoft.veyra.platform.hcm.domain.model.aggregates.Staff;
-import com.metasoft.veyra.platform.nursing.domain.model.aggregates.Resident;
+import com.metasoft.veyra.platform.activities.domain.model.valueobjects.ActivityType;
+import com.metasoft.veyra.platform.activities.domain.model.valueobjects.RecurringDay;
 import com.metasoft.veyra.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Activity aggregate root.
+ * <p>
+ * Represents a care activity assigned to a resident within a nursing home.
+ * An activity has a type, title, status lifecycle (PENDING → IN_PROGRESS → COMPLETED),
+ * and optional recurrence configuration.
+ * </p>
+ * @see ActivityType
+ * @see ActivityStatus
+ * @see RecurringDay
+ * @since 1.0
+ */
 @Entity
 @Table(name = "activities")
 @Getter
 public class Activity extends AuditableAbstractAggregateRoot<Activity> {
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String name;
+    private ActivityType type;
 
     @Column(nullable = false)
-    private LocalDate activityDate;
-
-    @Embedded
-    private ActivityPeriod period;
-
-    @Embedded
-    private Area area;
+    private String title;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ActivityStatus status;
 
-    @Embedded
-    @AttributeOverride(name = "nursingHomeId", column = @Column(name = "nursing_home_id", nullable = false))
-    private NursingHomeId nursingHomeId;
+    @Column(nullable = false)
+    private Long nursingHomeId;
 
-    // --- Relaciones para JPQL ---
+    @Column(nullable = false)
+    private Long residentId;
 
-    // El Agregado 'Resident' del módulo 'nursing'
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resident_id", insertable = false, updatable = false)
-    private Resident resident;
+    @Column(nullable = false)
+    private Long healthcareStaffId;
 
-    @Column(name = "resident_id", nullable = false)
-    private Long residentId; // Guardamos solo el ID
+    @Column(nullable = false)
+    private Boolean isRecurring;
 
-    // El Agregado 'Staff' del módulo 'hcm'
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "staff_member_id", insertable = false, updatable = false)
-    private Staff staff; // 'Attendant'
+    @ElementCollection(targetClass = RecurringDay.class)
+    @CollectionTable(name = "activity_recurring_days", joinColumns = @JoinColumn(name = "activity_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "day")
+    private List<RecurringDay> recurringDays = new ArrayList<>();
 
-    @Column(name = "staff_member_id", nullable = false)
-    private Long staffMemberId; // Guardamos solo el ID
+    /**
+     * Default constructor required by JPA.
+     */
+    protected Activity() {}
 
-    // ------------------------------------------------
-
-    public Activity() {
-        super();
-        this.status = ActivityStatus.PENDING;
-    }
-
+    /**
+     * Creates a new Activity from a {@link CreateActivityCommand}.
+     * The initial status is set to {@code PENDING}.
+     * @param command the command containing all data required to create the activity
+     */
     public Activity(CreateActivityCommand command) {
-        this();
-        this.name = command.name();
-        this.activityDate = command.activityDate();
-        this.period = new ActivityPeriod(command.startTime(), command.endTime());
-        this.area = new Area(command.area());
-        this.nursingHomeId = new NursingHomeId(command.nursingHomeId());
-
-        // Asignamos los IDs directamente
+        this.nursingHomeId = command.nursingHomeId();
+        this.type = command.type();
+        this.title = command.title();
+        this.status = ActivityStatus.PENDING;
         this.residentId = command.residentId();
-        this.staffMemberId = command.staffMemberId();
+        this.healthcareStaffId = command.healthcareStaffId();
+        this.isRecurring = command.isRecurring();
+        this.recurringDays = command.recurringDays() != null ? new ArrayList<>(command.recurringDays()) : new ArrayList<>();
     }
 
-    public void complete() {
-        if (this.status != ActivityStatus.PENDING) {
-            throw new IllegalStateException("Only pending activities can be completed.");
-        }
-        this.status = ActivityStatus.COMPLETED;
+    /**
+     * Updates the mutable fields of this activity.
+     * @param command the command containing the new values for type, title, isRecurring and recurringDays
+     * @return this activity instance after update
+     */
+    public Activity update(UpdateActivityCommand command) {
+        this.type = command.type();
+        this.title = command.title();
+        this.isRecurring = command.isRecurring();
+        this.recurringDays = command.recurringDays() != null ? new ArrayList<>(command.recurringDays()) : new ArrayList<>();
+        return this;
     }
 
-    public void cancel() {
+    /**
+     * Advances the activity status through the lifecycle: PENDING → IN_PROGRESS → COMPLETED.
+     * @throws IllegalStateException if the activity is already COMPLETED
+     */
+    public void advance() {
         if (this.status == ActivityStatus.COMPLETED) {
-            throw new IllegalStateException("A completed activity cannot be cancelled.");
+            throw new IllegalStateException("Activity is already completed.");
         }
-        this.status = ActivityStatus.CANCELLED;
+        this.status = this.status == ActivityStatus.PENDING
+                ? ActivityStatus.IN_PROGRESS
+                : ActivityStatus.COMPLETED;
     }
 }
