@@ -12,5 +12,5 @@ public enum Roles {
     /** The admin role. */
     ROLE_ADMIN,
     /** The instructor role. */
-    ROLE_FAMILIAR,
+    ROLE_RELATIVE,
 }

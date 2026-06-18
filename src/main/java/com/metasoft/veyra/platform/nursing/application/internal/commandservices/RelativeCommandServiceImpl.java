@@ -1,5 +1,4 @@
 package com.metasoft.veyra.platform.nursing.application.internal.commandservices;
-import com.metasoft.veyra.platform.nursing.application.internal.outboundservices.acl.ExternalIamService;
 import com.metasoft.veyra.platform.nursing.domain.exceptions.NursingHomeNotFoundException;
 import com.metasoft.veyra.platform.nursing.domain.model.aggregates.Relative;
 import com.metasoft.veyra.platform.nursing.domain.model.commands.AssignUserToRelativeCommand;
@@ -19,7 +18,7 @@ public class RelativeCommandServiceImpl implements RelativeCommandService {
     private final RelativeRepository relativeRepository;
     private final NursingHomeRepository nursingHomeRepository;
     private final ResidentRepository residentRepository;
-    public RelativeCommandServiceImpl(RelativeRepository relativeRepository, ExternalIamService externalIamService, ResidentRepository residentRepository, NursingHomeRepository nursingHomeRepository) {
+    public RelativeCommandServiceImpl(RelativeRepository relativeRepository, ResidentRepository residentRepository, NursingHomeRepository nursingHomeRepository) {
         this.relativeRepository = relativeRepository;
         this.nursingHomeRepository = nursingHomeRepository;
         this.residentRepository = residentRepository;
