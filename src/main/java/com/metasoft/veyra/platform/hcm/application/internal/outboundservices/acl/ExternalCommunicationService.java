@@ -1,28 +1,31 @@
-package com.metasoft.veyra.platform.nursing.application.internal.outboundservices.acl;
+package com.metasoft.veyra.platform.hcm.application.internal.outboundservices.acl;
+
 import com.metasoft.veyra.platform.communication.interfaces.acl.CommunicationContextFacade;
 import com.metasoft.veyra.platform.shared.domain.model.valueobjects.EmailTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Map;
-@Service("ExternalCommunicationServiceNursing")
+
+@Service("ExternalCommunicationServiceHcm")
 public class ExternalCommunicationService {
     private final CommunicationContextFacade communicationContextFacade;
-    @Value("${veyra.frontend.url}")
+    @Value("http://localhost:4200")
     private String frontendUrl;
 
     public ExternalCommunicationService(CommunicationContextFacade communicationContextFacade) {
         this.communicationContextFacade = communicationContextFacade;
     }
 
-    public void sendRelativeActivationEmail(String email, String firstName, String activationToken) {
+    public void sendStaffActivationEmail(String email, String fullName, String activationToken) {
         var activationLink = frontendUrl + "/iam/set-password?token=" + activationToken;
         communicationContextFacade.sendRenderedTemplateEmail(
                 List.of(email),
                 "Activa tu cuenta en Veyra",
                 EmailTemplate.SET_PASSWORD,
                 Map.of(
-                        "firstName", firstName,
+                        "firstName", fullName,
                         "actionUrl", activationLink,
                         "expiresIn", "24 horas",
                         "year", String.valueOf(java.time.Year.now().getValue()),
