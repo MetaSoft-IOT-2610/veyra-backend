@@ -36,7 +36,7 @@ public class Subscription extends AuditableAbstractAggregateRoot<Subscription> {
     private Amount amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(255)")
     private SubscriptionStatus status;
 
     private LocalDateTime currentPeriodStart;

@@ -37,7 +37,7 @@ public class Activity extends AuditableAbstractAggregateRoot<Activity> {
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(255)")
     private ActivityStatus status;
 
     @Column(nullable = false)

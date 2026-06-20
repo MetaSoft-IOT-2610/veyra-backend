@@ -26,7 +26,7 @@ public class Payment extends AuditableAbstractAggregateRoot<Payment> {
     private Amount amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(255)")
     private PaymentStatus status;
 
     private String failureMessage;
