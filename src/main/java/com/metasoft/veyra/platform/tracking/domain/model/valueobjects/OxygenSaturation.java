@@ -2,10 +2,10 @@ package com.metasoft.veyra.platform.tracking.domain.model.valueobjects;
 
 
 
-public record OxygenSaturation(Integer value) {
+public record OxygenSaturation(Integer oxygenSaturation) {
 
     public OxygenSaturation {
-        if (value == null || value < 0 || value > 100) {
+        if (oxygenSaturation == null || oxygenSaturation < 0 || oxygenSaturation > 100) {
             throw new IllegalArgumentException("Oxygen saturation must be between 0 and 100%");
         }
     }
