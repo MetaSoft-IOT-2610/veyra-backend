@@ -2,24 +2,45 @@ package com.metasoft.veyra.platform.tracking.infrastructure.persistence.jpa.repo
 
 import com.metasoft.veyra.platform.tracking.domain.model.aggregates.Device;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.AssignmentStatus;
+import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.DeviceType;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.MacAddress;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.NursingHomeId;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.ResidentId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface DeviceRepository extends JpaRepository<Device,Long>
-{
+public interface DeviceRepository extends JpaRepository<Device, Long> {
     Optional<Device> findByMacAddress(MacAddress macAddress);
+
     List<Device> findAllByStatus(AssignmentStatus status);
+
     List<Device> findAllByResidentId(ResidentId residentId);
+
     List<Device> findAllByNursingHomeId(NursingHomeId nursingHomeId);
+
     boolean existsByMacAddress(MacAddress macAddress);
+
     Optional<Device> findByMacAddressAndStatus(MacAddress macAddress, AssignmentStatus status);
 
     boolean existsDeviceById(Long id);
+
+    boolean existsByExternalDeviceId(String externalDeviceId);
+
+    Optional<Device> findByExternalDeviceId(String externalDeviceId);
+
+    Optional<Device> findByExternalDeviceIdAndMacAddress(String externalDeviceId, MacAddress macAddress);
+
+    boolean existsByNursingHomeIdAndDeviceType(NursingHomeId nursingHomeId, DeviceType deviceType);
+
+    List<Device> findByNursingHomeIdAndDeviceTypeNot(NursingHomeId nursingHomeId, DeviceType deviceType);
+
+    List<Device> findByNursingHomeIdAndDeviceTypeNotAndUpdatedAtAfter(
+            NursingHomeId nursingHomeId,
+            DeviceType deviceType,
+            LocalDateTime updatedAt);
 }
