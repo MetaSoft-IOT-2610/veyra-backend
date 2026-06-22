@@ -7,7 +7,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 @Service
 public class MeasurementRecordedEventHandler {
@@ -21,13 +21,18 @@ public class MeasurementRecordedEventHandler {
 
     @EventListener
     public void on(MeasurementRecordedEvent event) {
-        var payload = Map.of(
-                "deviceId", event.getDeviceId(),
-                "measurementTimestamp", event.getMeasurementTimestamp().toString(),
-                "heartRate", event.getHeartRate(),
-                "temperature", event.getTemperature(),
-                "oxygenSaturation", event.getOxygenSaturation()
-        );
+        var payload = new LinkedHashMap<String, Object>();
+        payload.put("deviceId", event.getDeviceId());
+        payload.put("measurementTimestamp", event.getMeasurementTimestamp().toString());
+        if (event.getHeartRate() != null) {
+            payload.put("heartRate", event.getHeartRate());
+        }
+        if (event.getTemperature() != null) {
+            payload.put("temperature", event.getTemperature());
+        }
+        if (event.getOxygenSaturation() != null) {
+            payload.put("oxygenSaturation", event.getOxygenSaturation());
+        }
 
         var topic = "/topic/tracking/measurements/" + event.getDeviceId();
         messagingTemplate.convertAndSend(topic, payload);
