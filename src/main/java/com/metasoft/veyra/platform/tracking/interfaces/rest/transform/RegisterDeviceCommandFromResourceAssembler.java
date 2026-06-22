@@ -5,6 +5,11 @@ import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.RegisterDe
 
 public class RegisterDeviceCommandFromResourceAssembler {
     public static RegisterDeviceCommand toCommandFromResource(RegisterDeviceResource resource, Long nursingHomeId) {
-        return new RegisterDeviceCommand(nursingHomeId, resource.deviceType(), resource.macAddress());
+        return new RegisterDeviceCommand(
+                nursingHomeId,
+                resource.externalDeviceId(),
+                resource.deviceType(),
+                resource.macAddress()
+        );
     }
 }

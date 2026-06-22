@@ -5,6 +5,11 @@ import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.RegisterDe
 
 public class UpdateDeviceCommandFromResourceAssembler {
     public static UpdateDeviceCommand toCommandFromResource(Long id, RegisterDeviceResource resource) {
-        return new UpdateDeviceCommand(id, resource.deviceType(),resource.macAddress());
+        return new UpdateDeviceCommand(
+                id,
+                resource.externalDeviceId(),
+                resource.deviceType(),
+                resource.macAddress()
+        );
     }
 }
