@@ -33,7 +33,7 @@ package "domain.model.commands" {
 }
 
 package "domain.model.queries" {
-  class GetAllMeasurementQuery
+  class GetMeasurementsByDeviceIdQuery
   class GetMeasurementsByResidentQuery
 }
 
@@ -85,7 +85,6 @@ MeasurementCommandServiceImpl --> MeasurementRepository : uses
 MeasurementQueryServiceImpl --> MeasurementRepository : uses
 
 MeasurementsController --> MeasurementCommandService : uses
-MeasurementsController --> MeasurementQueryService : uses
 
 MeasurementResourceFromEntityAssembler --> Measurement : reads
 MeasurementResource --> MeasurementResourceFromEntityAssembler
@@ -93,7 +92,7 @@ MeasurementResource --> MeasurementResourceFromEntityAssembler
 SeedMeasurementCommand --> MeasurementCommandService : execute
 CreateMeasurementCommand --> MeasurementCommandService : execute
 
-GetAllMeasurementQuery --> MeasurementQueryService : execute
+GetMeasurementsByDeviceIdQuery --> MeasurementQueryService : execute
 GetMeasurementsByResidentQuery --> MeasurementQueryService : execute
 
 TrackingApplicationReadyEventHandler --> MeasurementCommandServiceImpl : uses

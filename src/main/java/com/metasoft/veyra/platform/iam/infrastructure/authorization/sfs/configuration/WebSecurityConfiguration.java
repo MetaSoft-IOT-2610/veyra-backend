@@ -3,6 +3,8 @@ package com.metasoft.veyra.platform.iam.infrastructure.authorization.sfs.configu
 import com.metasoft.veyra.platform.iam.infrastructure.authorization.sfs.pipeline.BearerAuthorizationRequestFilter;
 import com.metasoft.veyra.platform.iam.infrastructure.hashing.bcrypt.BCryptHashingService;
 import com.metasoft.veyra.platform.iam.infrastructure.tokens.jwt.BearerTokenService;
+import com.metasoft.veyra.platform.tracking.infrastructure.authorization.EdgeGatewayAuthFilter;
+import com.metasoft.veyra.platform.tracking.infrastructure.persistence.jpa.repositories.DeviceRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
+import jakarta.servlet.DispatcherType;
 import java.util.List;
 
 /**
@@ -47,8 +50,13 @@ public class WebSecurityConfiguration {
      * @see BearerAuthorizationRequestFilter
      */
     @Bean
-    public BearerAuthorizationRequestFilter authorizationRequestFilter() {
+    public BearerAuthorizationRequestFilter bearerAuthorizationRequestFilter() {
         return new BearerAuthorizationRequestFilter(tokenService, userDetailsService);
+    }
+
+    @Bean
+    public EdgeGatewayAuthFilter edgeGatewayAuthFilter(DeviceRepository deviceRepository) {
+        return new EdgeGatewayAuthFilter(deviceRepository);
     }
 
     /**
@@ -91,7 +99,10 @@ public class WebSecurityConfiguration {
      * @throws Exception if an error occurs while configuring the security filter chain
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            BearerAuthorizationRequestFilter bearerAuthorizationRequestFilter,
+            EdgeGatewayAuthFilter edgeGatewayAuthFilter) throws Exception {
         http.cors(configurer -> configurer.configurationSource(_ -> {
             var cors = new CorsConfiguration();
             cors.setAllowedOrigins(List.of("*"));
@@ -103,6 +114,7 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(unauthorizedRequestHandler))
                 .sessionManagement( customizer -> customizer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(
                                 "/api/v1/authentication/**",
                                 "/api/v1/administrators",
@@ -121,7 +133,8 @@ public class WebSecurityConfiguration {
                                 "/webjars/**").permitAll()
                         .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
-        http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(edgeGatewayAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(bearerAuthorizationRequestFilter, EdgeGatewayAuthFilter.class);
         return http.build();
 
     }
@@ -133,7 +146,11 @@ public class WebSecurityConfiguration {
      * @param hashingService The hashing service
      * @param authenticationEntryPoint The authentication entry point
      */
-    public WebSecurityConfiguration(@Qualifier("defaultUserDetailsService") UserDetailsService userDetailsService, BearerTokenService tokenService, BCryptHashingService hashingService, AuthenticationEntryPoint authenticationEntryPoint) {
+    public WebSecurityConfiguration(
+            @Qualifier("defaultUserDetailsService") UserDetailsService userDetailsService,
+            BearerTokenService tokenService,
+            BCryptHashingService hashingService,
+            AuthenticationEntryPoint authenticationEntryPoint) {
         this.userDetailsService = userDetailsService;
         this.tokenService = tokenService;
         this.hashingService = hashingService;
