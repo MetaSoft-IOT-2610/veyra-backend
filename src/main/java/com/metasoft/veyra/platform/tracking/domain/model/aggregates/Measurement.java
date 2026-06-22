@@ -48,7 +48,7 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
             Integer heartRate,
             Double temperature,
             Integer oxygenSaturation) {
-        this(deviceId, heartRate, temperature, null, oxygenSaturation);
+        this(deviceId, Instant.now(), heartRate, temperature, null, oxygenSaturation);
     }
 
     public static Measurement fromEdgeReading(
