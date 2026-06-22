@@ -27,8 +27,11 @@ public class LocationRecordedEventHandler {
                 "recordedAt", event.getRecordedAt().toString()
         );
         var topic = "/topic/tracking/locations" + event.getDeviceId();
-        messagingTemplate.convertAndSend(topic, payload);
-
-        LOGGER.info("Broadcasted location to topic: {} | payload: {}", topic, payload);
+        try {
+            messagingTemplate.convertAndSend(topic, payload);
+            LOGGER.info("Broadcasted location to topic: {} | payload: {}", topic, payload);
+        } catch (Exception ex) {
+            LOGGER.warn("WebSocket broadcast failed for topic {}: {}", topic, ex.getMessage());
+        }
     }
 }
