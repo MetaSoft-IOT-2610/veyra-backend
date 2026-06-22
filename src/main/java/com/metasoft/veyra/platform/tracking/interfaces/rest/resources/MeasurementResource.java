@@ -1,6 +1,6 @@
 package com.metasoft.veyra.platform.tracking.interfaces.rest.resources;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record MeasurementResource(
         String id,
@@ -9,5 +9,5 @@ public record MeasurementResource(
         Double ambientTemperature,
         Integer heartRate,
         Integer oxygenSaturation,
-        LocalDateTime timestamp) {
+        Instant timestamp) {
 }

@@ -35,8 +35,11 @@ public class MeasurementRecordedEventHandler {
         }
 
         var topic = "/topic/tracking/measurements/" + event.getDeviceId();
-        messagingTemplate.convertAndSend(topic, payload);
-
-        LOGGER.info("Broadcasted measurement to topic: {} | payload: {}", topic, payload);
+        try {
+            messagingTemplate.convertAndSend(topic, payload);
+            LOGGER.info("Broadcasted measurement to topic: {} | payload: {}", topic, payload);
+        } catch (Exception ex) {
+            LOGGER.warn("WebSocket broadcast failed for topic {}: {}", topic, ex.getMessage());
+        }
     }
 }

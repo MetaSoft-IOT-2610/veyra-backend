@@ -10,7 +10,9 @@ import lombok.Getter;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Document(collection = "measurements")
 @Getter
@@ -51,6 +53,7 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
 
     public static Measurement fromEdgeReading(
             Long deviceId,
+            Instant recordedAt,
             Integer heartRate,
             Double bodyTemperature,
             Double ambientTemperature,
@@ -70,6 +73,7 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
 
         return new Measurement(
                 deviceId,
+                recordedAt,
                 validatedHeartRate,
                 validatedBodyTemperature,
                 validatedAmbientTemperature,
@@ -78,12 +82,15 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
 
     private Measurement(
             Long deviceId,
+            Instant recordedAt,
             Integer heartRate,
             Double bodyTemperature,
             Double ambientTemperature,
             Integer oxygenSaturation) {
         this.deviceId = new DeviceId(deviceId);
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDateTime.ofInstant(
+                recordedAt != null ? recordedAt : Instant.now(),
+                ZoneOffset.UTC);
         this.heartRate = heartRate;
         this.temperature = bodyTemperature;
         this.ambientTemperature = ambientTemperature;

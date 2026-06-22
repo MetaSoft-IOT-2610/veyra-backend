@@ -51,6 +51,7 @@ public class MeasurementCommandServiceImpl implements MeasurementCommandService 
 
         var measurement = Measurement.fromEdgeReading(
                 node.getId(),
+                command.recordedAt(),
                 command.heartRate(),
                 command.temperature(),
                 command.ambientTemperature(),
