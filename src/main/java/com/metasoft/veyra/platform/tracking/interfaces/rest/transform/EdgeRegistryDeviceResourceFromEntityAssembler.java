@@ -5,13 +5,36 @@ import com.metasoft.veyra.platform.tracking.infrastructure.authorization.MacAddr
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.EdgeRegistryDeviceResource;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.RecordEdgeMeasurementResource;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class EdgeRegistryDeviceResourceFromEntityAssembler {
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private EdgeRegistryDeviceResourceFromEntityAssembler() {
+    }
+
+    static Instant parseRecordedAt(String timestamp) {
+        if (timestamp == null || timestamp.isBlank()) {
+            return Instant.now();
+        }
+        var trimmed = timestamp.trim();
+        try {
+            return OffsetDateTime.parse(trimmed).toInstant();
+        } catch (DateTimeParseException ignored) {
+            // continue
+        }
+        try {
+            return Instant.parse(trimmed);
+        } catch (DateTimeParseException ignored) {
+            // continue
+        }
+        return LocalDateTime.parse(trimmed).toInstant(ZoneOffset.UTC);
     }
 
     public static EdgeRegistryDeviceResource toResourceFromEntity(Device entity) {
@@ -54,6 +77,7 @@ public class EdgeRegistryDeviceResourceFromEntityAssembler {
                 gatewayNursingHomeId,
                 resource.deviceId().trim(),
                 MacAddressNormalizer.normalize(resource.macAddress()),
+                parseRecordedAt(resource.timestamp()),
                 resource.heartRate(),
                 bodyTemperature,
                 resource.ambientTemperature(),
