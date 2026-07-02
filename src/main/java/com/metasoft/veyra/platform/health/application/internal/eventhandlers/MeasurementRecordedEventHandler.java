@@ -6,6 +6,7 @@ import com.metasoft.veyra.platform.tracking.domain.model.events.MeasurementRecor
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service("MeasurementRecordedEventHandlerHealth")
@@ -19,6 +20,7 @@ public class MeasurementRecordedEventHandler {
         this.vitalSignCommandService = vitalSignCommandService;
     }
 
+    @Async
     @EventListener
     public void on(MeasurementRecordedEvent event) {
         LOGGER.debug("MeasurementRecordedEvent received for device {}", event.getDeviceId());
