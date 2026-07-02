@@ -5,6 +5,17 @@ import com.metasoft.veyra.platform.health.interfaces.rest.resources.VitalSignRes
 
 public class VitalSignResourceFromEntityAssembler {
     public static VitalSignResource toResourceFromEntity(VitalSign entity){
-        return new VitalSignResource(entity.getId(),entity.getResidentId().residentId(),entity.getMeasurementId().measurementId(),entity.getSeverityLevel().name());
+        return new VitalSignResource(
+                entity.getId(),
+                entity.getResidentId().residentId(),
+                entity.getMeasurementId().measurementId(),
+                entity.getTemperature(),
+                entity.getHeartRate(),
+                entity.getSystolic(),
+                entity.getDiastolic(),
+                entity.getOxygenSaturation(),
+                entity.getRespiratoryRate(),
+                entity.getCreatedAt(),
+                entity.getSeverityLevel().name());
     }
 }

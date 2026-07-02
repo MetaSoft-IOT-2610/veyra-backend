@@ -72,8 +72,13 @@ public class VitalSignCommandServiceImpl implements VitalSignCommandService {
 
         var vitalSign = new VitalSign(
                 residentId,
-                new MeasurementId(command.measurementId())
-        );
+                new MeasurementId(command.measurementId()),
+                command.heartRate(),
+                command.systolic(),
+                command.diastolic(),
+                command.temperature(),
+                command.oxygenSaturation(),
+                command.respiratoryRate());
 
         if (thresholdOpt.isEmpty()) {
             LOGGER.info("Resident {} has no clinical parameters configured - storing as NORMAL without alert",

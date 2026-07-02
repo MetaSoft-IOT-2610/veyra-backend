@@ -23,6 +23,13 @@ public class VitalSign extends AuditableAbstractAggregateRoot<VitalSign> {
     @Column(nullable = false)
     private SeverityLevel severityLevel;
 
+    private Integer heartRate;
+    private Integer systolic;
+    private Integer diastolic;
+    private Double temperature;
+    private Integer oxygenSaturation;
+    private Integer respiratoryRate;
+
     protected VitalSign() {
     }
 
@@ -30,6 +37,24 @@ public class VitalSign extends AuditableAbstractAggregateRoot<VitalSign> {
         this.residentId = residentId;
         this.measurementId = measurementId;
         this.severityLevel = SeverityLevel.NORMAL;
+    }
+
+    public VitalSign(
+            ResidentId residentId,
+            MeasurementId measurementId,
+            Integer heartRate,
+            Integer systolic,
+            Integer diastolic,
+            Double temperature,
+            Integer oxygenSaturation,
+            Integer respiratoryRate) {
+        this(residentId, measurementId);
+        this.heartRate = heartRate;
+        this.systolic = systolic;
+        this.diastolic = diastolic;
+        this.temperature = temperature;
+        this.oxygenSaturation = oxygenSaturation;
+        this.respiratoryRate = respiratoryRate;
     }
 
 }
