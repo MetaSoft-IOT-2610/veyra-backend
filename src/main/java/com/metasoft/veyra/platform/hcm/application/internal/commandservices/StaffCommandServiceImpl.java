@@ -64,7 +64,6 @@ public class StaffCommandServiceImpl implements StaffCommandServices {
                     staff.getPersonProfileId().id()
             ));
         });
-
         var emergencyContact = new EmergencyContact(
                 command.emergencyContactFirstName(),
                 command.emergencyContactLastName(),
@@ -73,7 +72,6 @@ public class StaffCommandServiceImpl implements StaffCommandServices {
 
         var staff = new Staff(personProfileId.get(), nursingHomeId.get(), emergencyContact);
         staffRepository.save(staff);
-        staff.addDomainEvent(new RegisteredStaffEvent(staff, staff.getId(), command.emailAddress(), command.firstName(), command.lastName()));
         return staff.getId();
     }
 
@@ -113,37 +111,26 @@ public class StaffCommandServiceImpl implements StaffCommandServices {
                         .orElseThrow(() -> new IllegalArgumentException("Staff with id %s not found".formatted(command.staffMemberId())));
                 staff.addContractToHistory(command.startDate(),command.endDate(),command.typeOfContract()
                         ,command.staffRole(),command.workShift());
-                staffRepository.save(staff);
 
                 // Check if the staff role is DOCTOR or NURSE and create a user account
                 if ("DOCTOR".equals(command.staffRole()) || "NURSE".equals(command.staffRole())) {
-                    String dni = externalProfileService.fetchDniByPersonProfileId(staff.getPersonProfileId().id());
-                    if (dni.isEmpty()) {
-                        throw new IllegalStateException("DNI not found for staff profile with ID: " + staff.getPersonProfileId().id());
-                    }
+                    var profileDetailsOpt = externalProfileService.fetchProfileDetailsByPersonProfileId(staff.getPersonProfileId().id());
 
-                    // Create user in IAM with empty password and ROLE_DOCTOR/NURSE
-                    Long userId = externalIamService.createStaffUser(dni, "", "ROLE_"+command.staffRole());
-
-                    if (userId == 0L) {
-                        throw new RuntimeException("Could not create user in IAM for DNI: " + dni);
-                    }
-
-                    staff.setUserId(new UserId(userId));
-                    staffRepository.save(staff); // Save staff with the new userId
-
-                    // Fetch profile details and publish RegisteredStaffEvent
-                    externalProfileService.fetchProfileDetailsByPersonProfileId(staff.getPersonProfileId().id())
-                            .ifPresent(profileDetails ->
-                                    staff.addDomainEvent(new RegisteredStaffEvent(
-                                            staff,
-                                            staff.getId(),
-                                            profileDetails.email(),
-                                            profileDetails.firstName(),
-                                            profileDetails.lastName()
-                                    ))
-                            );
+                    // We only publish the event. The EventHandler will be responsible for 
+                    // creating the IAM account, linking the UserId, and sending the activation email.
+                    profileDetailsOpt.ifPresent(profileDetails ->
+                            staff.addDomainEvent(new RegisteredStaffEvent(
+                                    staff,
+                                    staff.getId(),
+                                    profileDetails.email(),
+                                    profileDetails.firstName(),
+                                    profileDetails.lastName()
+                            ))
+                    );
                 }
+                
+                // This single save handles the contract, userId, and publishes the RegisteredStaffEvent
+                staffRepository.save(staff);
 
             } catch (Exception e){
                 throw new IllegalArgumentException("Error while adding contract to staff: %s".formatted(e.getMessage()));

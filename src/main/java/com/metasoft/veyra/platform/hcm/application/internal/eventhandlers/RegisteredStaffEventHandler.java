@@ -36,10 +36,8 @@ public class RegisteredStaffEventHandler {
     public void on(RegisteredStaffEvent event) {
         LOGGER.info("Handling RegisteredStaffEvent for email: {}", event.getEmail());
 
-        // 1. Crear la cuenta en IAM y obtener el token de activación
         var activationToken = externalIamService.createStaffAccount(event.getEmail());
 
-        // 2. Obtener el UserId de IAM y asignarlo al Staff
         var iamUserId = externalIamService.fetchUserByUsername(event.getEmail());
         if (iamUserId != null) {
             staffRepository.findById(event.getStaffId()).ifPresent(staff -> {
@@ -48,7 +46,6 @@ public class RegisteredStaffEventHandler {
             });
         }
 
-        // 3. Enviar el email de activación
         externalCommunicationService.sendStaffActivationEmail(event.getEmail(), event.getFirstName() + " " + event.getLastName(), activationToken);
 
         LOGGER.info("Staff account created and activation email sent to: {}", event.getEmail());
