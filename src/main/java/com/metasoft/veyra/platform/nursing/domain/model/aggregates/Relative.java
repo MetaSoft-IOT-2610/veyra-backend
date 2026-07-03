@@ -13,6 +13,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.*;
 import lombok.Getter;
+
 @Getter
 @Entity
 public class Relative extends AuditableAbstractAggregateRoot<Relative> {
@@ -22,31 +23,32 @@ public class Relative extends AuditableAbstractAggregateRoot<Relative> {
     private EmailAddress emailAddress;
     private PersonName personName;
     @OneToOne()
-    @JoinColumn( name = "resident_id")
-private Resident resident;
-@ManyToOne()
-@JoinColumn( name = "nursing_home_id")
-private NursingHome nursingHome;
-    public Relative(String emailAddress, String firstName, String lastName, Resident resident,NursingHome nursingHome){
-    this.emailAddress= new EmailAddress(emailAddress);
-    this.userId=null;
-    this.resident= resident;
-    this.nursingHome=nursingHome;
-    this.personName= new PersonName(firstName, lastName);
-        this.addDomainEvent(new RegisteredRelativeEvent(this,this.emailAddress.emailAddress(),this.personName.firstName(),this.personName.lastName()));
+    @JoinColumn(name = "resident_id")
+    private Resident resident;
+    @ManyToOne()
+    @JoinColumn(name = "nursing_home_id")
+    private NursingHome nursingHome;
+    public Relative(String emailAddress, String firstName, String lastName, Resident resident, NursingHome nursingHome) {
+        this.emailAddress = new EmailAddress(emailAddress);
+        this.userId = null;
+        this.resident = resident;
+        this.nursingHome = nursingHome;
+        this.personName = new PersonName(firstName, lastName);
+        this.addDomainEvent(new RegisteredRelativeEvent(this, this.emailAddress.emailAddress(), this.personName.firstName(), this.personName.lastName()));
     }
 
-    public Relative(){
+    public Relative() {
 
     }
-    public void linkToUser(Long  userId){
+
+    public void linkToUser(Long userId) {
         if (userId == null || userId < 1) {
             throw new IllegalArgumentException("userId must be a positive number.");
         }
-        if (this.userId!=null){
+        if (this.userId != null) {
             throw new IllegalArgumentException("user is already linked to this relative");
         }
-        this.userId=new UserId(userId);
+        this.userId = new UserId(userId);
     }
 
     // dentro de la clase Relative
