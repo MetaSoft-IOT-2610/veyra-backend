@@ -85,8 +85,8 @@ public class EdgeVitalSignThresholdsController {
                 threshold.getTemperatureMax(),
                 threshold.getOxygenSaturationMin(),
                 threshold.getOxygenSaturationMax(),
-                threshold.getRespiratoryRateMin(),
-                threshold.getRespiratoryRateMax(),
+                null,
+                null,
                 threshold.getUpdatedAt().toString()
         );
     }

@@ -112,8 +112,6 @@ public class VitalSignCommandServiceImpl implements VitalSignCommandService {
         double tempMax = t.getTemperatureMax()    != null ? t.getTemperatureMax()        : Double.MAX_VALUE;
         int sysMax  = t.getSystolicMax()          != null ? t.getSystolicMax()           : Integer.MAX_VALUE;
         int diasMax = t.getDiastolicMax()         != null ? t.getDiastolicMax()          : Integer.MAX_VALUE;
-        int rrMin   = t.getRespiratoryRateMin()   != null ? t.getRespiratoryRateMin()    : 0;
-        int rrMax   = t.getRespiratoryRateMax()   != null ? t.getRespiratoryRateMax()    : Integer.MAX_VALUE;
 
         if (command.heartRate() != null) {
             if (command.heartRate() < hrMin) {
@@ -142,12 +140,6 @@ public class VitalSignCommandServiceImpl implements VitalSignCommandService {
         if (command.systolic() != null && command.diastolic() != null) {
             if (command.systolic() > sysMax || command.diastolic() > diasMax) {
                 anomalies.add(String.format("PA elevada: %d/%d mmHg (normal: <%d/<%d)", command.systolic(), command.diastolic(), sysMax, diasMax));
-            }
-        }
-
-        if (command.respiratoryRate() != null) {
-            if (command.respiratoryRate() < rrMin || command.respiratoryRate() > rrMax) {
-                anomalies.add(String.format("FR anormal: %d rpm (normal: %d-%d)", command.respiratoryRate(), rrMin, rrMax));
             }
         }
 
