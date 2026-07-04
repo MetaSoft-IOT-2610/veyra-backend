@@ -23,6 +23,7 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
     private Double temperature;
     private Double ambientTemperature;
     private Integer oxygenSaturation;
+    private Boolean clinicalRecord;
 
     protected Measurement() {
     }
@@ -34,13 +35,15 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
             Integer heartRate,
             Double temperature,
             Double ambientTemperature,
-            Integer oxygenSaturation) {
+            Integer oxygenSaturation,
+            Boolean clinicalRecord) {
         this.deviceId = deviceId;
         this.timestamp = timestamp;
         this.heartRate = heartRate;
         this.temperature = temperature;
         this.ambientTemperature = ambientTemperature;
         this.oxygenSaturation = oxygenSaturation;
+        this.clinicalRecord = clinicalRecord;
     }
 
     public Measurement(
@@ -48,7 +51,7 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
             Integer heartRate,
             Double temperature,
             Integer oxygenSaturation) {
-        this(deviceId, Instant.now(), heartRate, temperature, null, oxygenSaturation);
+        this(deviceId, Instant.now(), heartRate, temperature, null, oxygenSaturation, true);
     }
 
     public static Measurement fromEdgeReading(
@@ -57,7 +60,8 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
             Integer heartRate,
             Double bodyTemperature,
             Double ambientTemperature,
-            Integer oxygenSaturation) {
+            Integer oxygenSaturation,
+            Boolean clinicalRecord) {
 
         var validatedHeartRate = validateHeartRate(heartRate);
         var validatedBodyTemperature = validateBodyTemperature(bodyTemperature);
@@ -77,7 +81,8 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
                 validatedHeartRate,
                 validatedBodyTemperature,
                 validatedAmbientTemperature,
-                validatedOxygenSaturation);
+                validatedOxygenSaturation,
+                clinicalRecord);
     }
 
     private Measurement(
@@ -86,7 +91,8 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
             Integer heartRate,
             Double bodyTemperature,
             Double ambientTemperature,
-            Integer oxygenSaturation) {
+            Integer oxygenSaturation,
+            Boolean clinicalRecord) {
         this.deviceId = new DeviceId(deviceId);
         this.timestamp = LocalDateTime.ofInstant(
                 recordedAt != null ? recordedAt : Instant.now(),
@@ -95,13 +101,17 @@ public class Measurement extends AuditableMongoAggregateRoot<Measurement> {
         this.temperature = bodyTemperature;
         this.ambientTemperature = ambientTemperature;
         this.oxygenSaturation = oxygenSaturation;
-        this.addDomainEvent(new MeasurementRecordedEvent(
-                this,
-                this.deviceId.deviceId(),
-                this.timestamp,
-                this.heartRate,
-                this.temperature != null ? this.temperature : this.ambientTemperature,
-                this.oxygenSaturation));
+        this.clinicalRecord = Boolean.TRUE.equals(clinicalRecord);
+        if (this.clinicalRecord) {
+            this.addDomainEvent(new MeasurementRecordedEvent(
+                    this,
+                    this.deviceId.deviceId(),
+                    this.timestamp,
+                    this.heartRate,
+                    this.temperature != null ? this.temperature : this.ambientTemperature,
+                    this.oxygenSaturation,
+                    true));
+        }
     }
 
     private static Integer validateHeartRate(Integer value) {

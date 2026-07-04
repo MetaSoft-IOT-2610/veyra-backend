@@ -27,7 +27,7 @@ public class VitalSignThresholdCommandServiceImpl implements VitalSignThresholdC
                     command.heartRateMin(), command.heartRateMax(),
                     command.systolicMax(), command.diastolicMax(),
                     command.temperatureMin(), command.temperatureMax(),
-                    command.oxygenSaturationMin(),
+                    command.oxygenSaturationMin(), command.oxygenSaturationMax(),
                     command.respiratoryRateMin(), command.respiratoryRateMax()
             );
             return repository.save(threshold);
@@ -38,7 +38,7 @@ public class VitalSignThresholdCommandServiceImpl implements VitalSignThresholdC
                 command.heartRateMin(), command.heartRateMax(),
                 command.systolicMax(), command.diastolicMax(),
                 command.temperatureMin(), command.temperatureMax(),
-                command.oxygenSaturationMin(),
+                command.oxygenSaturationMin(), command.oxygenSaturationMax(),
                 command.respiratoryRateMin(), command.respiratoryRateMax()
         );
         return repository.save(threshold);

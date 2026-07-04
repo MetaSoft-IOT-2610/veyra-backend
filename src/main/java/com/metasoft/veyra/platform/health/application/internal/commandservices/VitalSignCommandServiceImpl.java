@@ -24,17 +24,6 @@ public class VitalSignCommandServiceImpl implements VitalSignCommandService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(VitalSignCommandServiceImpl.class);
 
-    // Umbrales críticos siempre fijos (no configurables)
-    private static final int HR_CRITICAL_LOW = 50;
-    private static final int HR_CRITICAL_HIGH = 120;
-    private static final int SPO2_CRITICAL = 90;
-    private static final double TEMP_CRITICAL_LOW = 35.0;
-    private static final double TEMP_CRITICAL_HIGH = 39.0;
-    private static final int SYSTOLIC_CRITICAL = 180;
-    private static final int DIASTOLIC_CRITICAL = 110;
-    private static final int RR_CRITICAL_LOW = 8;
-    private static final int RR_CRITICAL_HIGH = 24;
-
     private final VitalSignRepository vitalSignRepository;
     private final ExternalTrackingService externalTrackingService;
     private final VitalSignThresholdQueryService thresholdQueryService;
@@ -72,8 +61,14 @@ public class VitalSignCommandServiceImpl implements VitalSignCommandService {
 
         var vitalSign = new VitalSign(
                 residentId,
-                new MeasurementId(command.measurementId())
-        );
+                new MeasurementId(command.measurementId()),
+                command.heartRate(),
+                command.systolic(),
+                command.diastolic(),
+                command.temperature(),
+                command.oxygenSaturation(),
+                command.respiratoryRate(),
+                command.registeredAt());
 
         if (thresholdOpt.isEmpty()) {
             LOGGER.info("Resident {} has no clinical parameters configured - storing as NORMAL without alert",
@@ -108,64 +103,47 @@ public class VitalSignCommandServiceImpl implements VitalSignCommandService {
     }
     private ValidationResult validateVitalSigns(ValidateVitalSignCommand command, VitalSignThreshold t) {
         var anomalies = new ArrayList<String>();
-        boolean hasCritical = false;
 
         int hrMin   = t.getHeartRateMin()         != null ? t.getHeartRateMin()         : 0;
         int hrMax   = t.getHeartRateMax()         != null ? t.getHeartRateMax()         : Integer.MAX_VALUE;
         int spo2Min = t.getOxygenSaturationMin()  != null ? t.getOxygenSaturationMin()  : 0;
+        int spo2Max = t.getOxygenSaturationMax()  != null ? t.getOxygenSaturationMax()  : Integer.MAX_VALUE;
         double tempMin = t.getTemperatureMin()    != null ? t.getTemperatureMin()        : 0.0;
         double tempMax = t.getTemperatureMax()    != null ? t.getTemperatureMax()        : Double.MAX_VALUE;
         int sysMax  = t.getSystolicMax()          != null ? t.getSystolicMax()           : Integer.MAX_VALUE;
         int diasMax = t.getDiastolicMax()         != null ? t.getDiastolicMax()          : Integer.MAX_VALUE;
-        int rrMin   = t.getRespiratoryRateMin()   != null ? t.getRespiratoryRateMin()    : 0;
-        int rrMax   = t.getRespiratoryRateMax()   != null ? t.getRespiratoryRateMax()    : Integer.MAX_VALUE;
 
         if (command.heartRate() != null) {
             if (command.heartRate() < hrMin) {
                 anomalies.add(String.format("FC bajo: %d bpm (normal: %d-%d)", command.heartRate(), hrMin, hrMax));
-                if (command.heartRate() < HR_CRITICAL_LOW) hasCritical = true;
             } else if (command.heartRate() > hrMax) {
                 anomalies.add(String.format("FC alto: %d bpm (normal: %d-%d)", command.heartRate(), hrMin, hrMax));
-                if (command.heartRate() > HR_CRITICAL_HIGH) hasCritical = true;
             }
         }
 
         if (command.oxygenSaturation() != null) {
             if (command.oxygenSaturation() < spo2Min) {
-                anomalies.add(String.format("SpO2 bajo: %d%% (normal: >=%d%%)", command.oxygenSaturation(), spo2Min));
-                if (command.oxygenSaturation() < SPO2_CRITICAL) hasCritical = true;
+                anomalies.add(String.format("SpO2 bajo: %d%% (normal: %d-%d%%)", command.oxygenSaturation(), spo2Min, spo2Max));
+            } else if (command.oxygenSaturation() > spo2Max) {
+                anomalies.add(String.format("SpO2 alto: %d%% (normal: %d-%d%%)", command.oxygenSaturation(), spo2Min, spo2Max));
             }
         }
 
         if (command.temperature() != null) {
             if (command.temperature() < tempMin) {
                 anomalies.add(String.format("Temperatura baja: %.1f°C (normal: %.1f-%.1f)", command.temperature(), tempMin, tempMax));
-                if (command.temperature() < TEMP_CRITICAL_LOW) hasCritical = true;
             } else if (command.temperature() > tempMax) {
                 anomalies.add(String.format("Temperatura alta: %.1f°C (normal: %.1f-%.1f)", command.temperature(), tempMin, tempMax));
-                if (command.temperature() > TEMP_CRITICAL_HIGH) hasCritical = true;
             }
         }
 
         if (command.systolic() != null && command.diastolic() != null) {
             if (command.systolic() > sysMax || command.diastolic() > diasMax) {
                 anomalies.add(String.format("PA elevada: %d/%d mmHg (normal: <%d/<%d)", command.systolic(), command.diastolic(), sysMax, diasMax));
-                if (command.systolic() > SYSTOLIC_CRITICAL || command.diastolic() > DIASTOLIC_CRITICAL) hasCritical = true;
             }
         }
 
-        if (command.respiratoryRate() != null) {
-            if (command.respiratoryRate() < rrMin || command.respiratoryRate() > rrMax) {
-                anomalies.add(String.format("FR anormal: %d rpm (normal: %d-%d)", command.respiratoryRate(), rrMin, rrMax));
-                if (command.respiratoryRate() < RR_CRITICAL_LOW || command.respiratoryRate() > RR_CRITICAL_HIGH) hasCritical = true;
-            }
-        }
-
-        SeverityLevel severity;
-        if (hasCritical) severity = SeverityLevel.CRITICAL;
-        else if (anomalies.size() >= 2) severity = SeverityLevel.HIGH;
-        else if (anomalies.size() == 1) severity = SeverityLevel.MEDIUM;
-        else severity = SeverityLevel.NORMAL;
+        SeverityLevel severity = anomalies.isEmpty() ? SeverityLevel.NORMAL : SeverityLevel.CRITICAL;
 
         return new ValidationResult(severity, anomalies);
     }

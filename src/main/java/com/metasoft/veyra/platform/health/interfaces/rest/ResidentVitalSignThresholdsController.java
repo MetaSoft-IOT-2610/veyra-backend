@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -32,9 +33,10 @@ public class ResidentVitalSignThresholdsController {
     }
 
     @PutMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_DOCTOR')")
     @Operation(
         summary = "Set vital sign thresholds for a resident",
-        description = "Creates or updates the doctor-defined thresholds used to evaluate this resident's vital signs."
+        description = "Creates or updates the resident-defined clinical thresholds used to evaluate vital signs. Only admins and doctors can update them."
     )
     @ApiResponse(responseCode = "200", description = "Thresholds saved successfully")
     public ResponseEntity<VitalSignThresholdResource> setThresholds(
@@ -46,8 +48,8 @@ public class ResidentVitalSignThresholdsController {
                 resource.heartRateMin(), resource.heartRateMax(),
                 resource.systolicMax(), resource.diastolicMax(),
                 resource.temperatureMin(), resource.temperatureMax(),
-                resource.oxygenSaturationMin(),
-                resource.respiratoryRateMin(), resource.respiratoryRateMax()
+                resource.oxygenSaturationMin(), resource.oxygenSaturationMax(),
+                null, null
         );
         var threshold = commandService.handle(command);
         return ResponseEntity.ok(toResource(threshold));
@@ -74,8 +76,8 @@ public class ResidentVitalSignThresholdsController {
                 t.getHeartRateMin(), t.getHeartRateMax(),
                 t.getSystolicMax(), t.getDiastolicMax(),
                 t.getTemperatureMin(), t.getTemperatureMax(),
-                t.getOxygenSaturationMin(),
-                t.getRespiratoryRateMin(), t.getRespiratoryRateMax()
+                t.getOxygenSaturationMin(), t.getOxygenSaturationMax(),
+                null, null
         );
     }
 }

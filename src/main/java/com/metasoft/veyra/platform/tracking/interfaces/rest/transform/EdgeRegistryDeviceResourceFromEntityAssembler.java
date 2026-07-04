@@ -83,7 +83,8 @@ public class EdgeRegistryDeviceResourceFromEntityAssembler {
                 resource.ambientTemperature(),
                 resource.oxygenSaturation(),
                 latitude,
-                longitude
+                longitude,
+                Boolean.TRUE.equals(resource.clinicalRecord())
         );
     }
 }

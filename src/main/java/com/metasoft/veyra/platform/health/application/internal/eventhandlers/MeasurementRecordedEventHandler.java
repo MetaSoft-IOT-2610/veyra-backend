@@ -6,6 +6,7 @@ import com.metasoft.veyra.platform.tracking.domain.model.events.MeasurementRecor
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service("MeasurementRecordedEventHandlerHealth")
@@ -19,13 +20,19 @@ public class MeasurementRecordedEventHandler {
         this.vitalSignCommandService = vitalSignCommandService;
     }
 
+    @Async
     @EventListener
     public void on(MeasurementRecordedEvent event) {
+        if (!Boolean.TRUE.equals(event.getClinicalRecord())) {
+            LOGGER.debug("MeasurementRecordedEvent ignored for device {} because it is telemetry-only", event.getDeviceId());
+            return;
+        }
         LOGGER.debug("MeasurementRecordedEvent received for device {}", event.getDeviceId());
         var measurementId = event.getDeviceId() + "_" + event.getMeasurementTimestamp().toString();
         var command = new ValidateVitalSignCommand(
                 measurementId,
                 event.getDeviceId(),
+                event.getMeasurementTimestamp(),
                 event.getHeartRate(),
                 null,
                 null,

@@ -17,6 +17,7 @@ public record RecordEdgeMeasurementResource(
         Integer satelliteCount,
         Integer satellitesInView,
         Map<String, Object> diagnostics,
+        Boolean clinicalRecord,
         GatewayPayload gateway) {
 
     public record BloodPressurePayload(Integer systolic, Integer diastolic) {

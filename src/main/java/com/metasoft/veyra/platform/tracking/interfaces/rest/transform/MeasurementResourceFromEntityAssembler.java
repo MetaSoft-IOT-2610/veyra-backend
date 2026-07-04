@@ -14,6 +14,7 @@ public class MeasurementResourceFromEntityAssembler {
                 measurement.getAmbientTemperature(),
                 measurement.getHeartRate(),
                 measurement.getOxygenSaturation(),
+                measurement.getClinicalRecord(),
                 measurement.getTimestamp().atZone(ZoneOffset.UTC).toInstant()
         );
     }

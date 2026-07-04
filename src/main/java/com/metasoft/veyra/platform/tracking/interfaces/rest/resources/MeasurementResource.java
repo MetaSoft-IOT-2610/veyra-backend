@@ -9,5 +9,6 @@ public record MeasurementResource(
         Double ambientTemperature,
         Integer heartRate,
         Integer oxygenSaturation,
+        Boolean clinicalRecord,
         Instant timestamp) {
 }
