@@ -55,7 +55,8 @@ public class MeasurementCommandServiceImpl implements MeasurementCommandService 
                 command.heartRate(),
                 command.temperature(),
                 command.ambientTemperature(),
-                command.oxygenSaturation());
+                command.oxygenSaturation(),
+                command.clinicalRecord());
         var saved = measurementRepository.save(measurement);
 
         if (command.latitude() != null && command.longitude() != null) {

@@ -12,5 +12,6 @@ public record RecordEdgeMeasurementCommand(
         Double ambientTemperature,
         Integer oxygenSaturation,
         Double latitude,
-        Double longitude) {
+        Double longitude,
+        Boolean clinicalRecord) {
 }
