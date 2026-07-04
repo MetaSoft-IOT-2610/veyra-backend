@@ -9,6 +9,7 @@ public record RegisterVitalSignThresholdCommand(
         Double temperatureMin,
         Double temperatureMax,
         Integer oxygenSaturationMin,
+        Integer oxygenSaturationMax,
         Integer respiratoryRateMin,
         Integer respiratoryRateMax
 ) {}

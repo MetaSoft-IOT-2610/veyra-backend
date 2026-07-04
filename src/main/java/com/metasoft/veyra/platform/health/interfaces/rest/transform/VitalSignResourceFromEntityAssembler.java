@@ -15,7 +15,7 @@ public class VitalSignResourceFromEntityAssembler {
                 entity.getDiastolic(),
                 entity.getOxygenSaturation(),
                 entity.getRespiratoryRate(),
-                entity.getCreatedAt(),
+                entity.getRegisteredAt() != null ? entity.getRegisteredAt() : entity.getCreatedAt(),
                 entity.getSeverityLevel().name());
     }
 }

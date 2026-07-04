@@ -19,6 +19,7 @@ public class VitalSignThreshold extends AuditableAbstractAggregateRoot<VitalSign
     private Double temperatureMin;
     private Double temperatureMax;
     private Integer oxygenSaturationMin;
+    private Integer oxygenSaturationMax;
     private Integer respiratoryRateMin;
     private Integer respiratoryRateMax;
 
@@ -33,6 +34,7 @@ public class VitalSignThreshold extends AuditableAbstractAggregateRoot<VitalSign
             Double temperatureMin,
             Double temperatureMax,
             Integer oxygenSaturationMin,
+            Integer oxygenSaturationMax,
             Integer respiratoryRateMin,
             Integer respiratoryRateMax) {
         this.residentId = residentId;
@@ -43,6 +45,7 @@ public class VitalSignThreshold extends AuditableAbstractAggregateRoot<VitalSign
         this.temperatureMin = temperatureMin;
         this.temperatureMax = temperatureMax;
         this.oxygenSaturationMin = oxygenSaturationMin;
+        this.oxygenSaturationMax = oxygenSaturationMax;
         this.respiratoryRateMin = respiratoryRateMin;
         this.respiratoryRateMax = respiratoryRateMax;
     }
@@ -55,6 +58,7 @@ public class VitalSignThreshold extends AuditableAbstractAggregateRoot<VitalSign
             Double temperatureMin,
             Double temperatureMax,
             Integer oxygenSaturationMin,
+            Integer oxygenSaturationMax,
             Integer respiratoryRateMin,
             Integer respiratoryRateMax) {
         this.heartRateMin = heartRateMin;
@@ -64,6 +68,7 @@ public class VitalSignThreshold extends AuditableAbstractAggregateRoot<VitalSign
         this.temperatureMin = temperatureMin;
         this.temperatureMax = temperatureMax;
         this.oxygenSaturationMin = oxygenSaturationMin;
+        this.oxygenSaturationMax = oxygenSaturationMax;
         this.respiratoryRateMin = respiratoryRateMin;
         this.respiratoryRateMax = respiratoryRateMax;
     }

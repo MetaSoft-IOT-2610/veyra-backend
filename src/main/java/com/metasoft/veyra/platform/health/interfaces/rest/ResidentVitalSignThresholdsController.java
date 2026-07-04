@@ -48,7 +48,7 @@ public class ResidentVitalSignThresholdsController {
                 resource.heartRateMin(), resource.heartRateMax(),
                 resource.systolicMax(), resource.diastolicMax(),
                 resource.temperatureMin(), resource.temperatureMax(),
-                resource.oxygenSaturationMin(),
+                resource.oxygenSaturationMin(), resource.oxygenSaturationMax(),
                 resource.respiratoryRateMin(), resource.respiratoryRateMax()
         );
         var threshold = commandService.handle(command);
@@ -76,7 +76,7 @@ public class ResidentVitalSignThresholdsController {
                 t.getHeartRateMin(), t.getHeartRateMax(),
                 t.getSystolicMax(), t.getDiastolicMax(),
                 t.getTemperatureMin(), t.getTemperatureMax(),
-                t.getOxygenSaturationMin(),
+                t.getOxygenSaturationMin(), t.getOxygenSaturationMax(),
                 t.getRespiratoryRateMin(), t.getRespiratoryRateMax()
         );
     }

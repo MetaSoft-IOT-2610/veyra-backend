@@ -28,6 +28,7 @@ public class MeasurementRecordedEventHandler {
         var command = new ValidateVitalSignCommand(
                 measurementId,
                 event.getDeviceId(),
+                event.getMeasurementTimestamp(),
                 event.getHeartRate(),
                 null,
                 null,

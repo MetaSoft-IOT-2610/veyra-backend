@@ -10,6 +10,7 @@ public record VitalSignThresholdResource(
         Double temperatureMin,
         Double temperatureMax,
         Integer oxygenSaturationMin,
+        Integer oxygenSaturationMax,
         Integer respiratoryRateMin,
         Integer respiratoryRateMax
 ) {}

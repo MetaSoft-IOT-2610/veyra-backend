@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 public class VitalSign extends AuditableAbstractAggregateRoot<VitalSign> {
@@ -29,6 +31,7 @@ public class VitalSign extends AuditableAbstractAggregateRoot<VitalSign> {
     private Double temperature;
     private Integer oxygenSaturation;
     private Integer respiratoryRate;
+    private LocalDateTime registeredAt;
 
     protected VitalSign() {
     }
@@ -47,7 +50,8 @@ public class VitalSign extends AuditableAbstractAggregateRoot<VitalSign> {
             Integer diastolic,
             Double temperature,
             Integer oxygenSaturation,
-            Integer respiratoryRate) {
+            Integer respiratoryRate,
+            LocalDateTime registeredAt) {
         this(residentId, measurementId);
         this.heartRate = heartRate;
         this.systolic = systolic;
@@ -55,6 +59,7 @@ public class VitalSign extends AuditableAbstractAggregateRoot<VitalSign> {
         this.temperature = temperature;
         this.oxygenSaturation = oxygenSaturation;
         this.respiratoryRate = respiratoryRate;
+        this.registeredAt = registeredAt;
     }
 
 }
