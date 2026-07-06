@@ -1,20 +1,18 @@
 @startuml
 ' Bounded Context: analytics
+' Compact view: aggregates, services, repositories, controllers.
+' Individual commands/queries/resources/assemblers are omitted for readability.
 
-package "application.internal.commandservices" {
-  class MetricCommandServiceImpl
-}
-
-package "application.eventhandlers" {
-  class AdmittedResidentEventHandler
-  class HiredEmployeeEventHandler
-  class RetiredResidentEventHandler
-  class SuspendedEmployeeEventHandler
-  class TerminationEmployeeEventHandler
-}
-
-package "application.internal.queryservices" {
-  class MetricQueryServiceImpl
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 50
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
 }
 
 package "domain.model.aggregates" {
@@ -28,30 +26,22 @@ package "domain.model.aggregates" {
   }
 }
 
-package "domain.model.commands" {
-  class RecordMetricCommand
-}
-
-package "domain.model.queries" {
-  class GetResidentActivesByNursingHomeIdAndYearQuery
-  class GetResidentAdmissionsByNursingHomeIdAndDateRangeQuery
-  class GetResidentAdmissionsByNursingHomeIdAndYearAndMonthQuery
-  class GetResidentAdmissionsByNursingHomeIdAndYearQuery
-  class GetStaffHiresByNursingHomeIdAndYearAndMonthQuery
-  class GetStaffHiresByNursingHomeIdAndYearQuery
-  class GetStaffTerminationsByNursingHomeIdAndYearAndMonthQuery
-  class GetStaffTerminationsByNursingHomeIdAndYearQuery
-}
-
-package "domain.model.valueobjects" {
-  class MetricCategory
-  class MetricType
-  class NursingHomeId
-}
-
 package "domain.services" {
   interface MetricCommandService
   interface MetricQueryService
+}
+
+package "application (command/query services)" {
+  class MetricCommandServiceImpl
+  class MetricQueryServiceImpl
+}
+
+package "application.eventhandlers" {
+  class AdmittedResidentEventHandler
+  class HiredEmployeeEventHandler
+  class RetiredResidentEventHandler
+  class SuspendedEmployeeEventHandler
+  class TerminationEmployeeEventHandler
 }
 
 package "infrastructure.persistence.jpa.repositories" {
@@ -60,46 +50,21 @@ package "infrastructure.persistence.jpa.repositories" {
 
 package "interfaces.rest" {
   class NursingHomeAnalyticsController
-  package "resources" {
-    class MetricResource
-  }
-  package "transform" {
-    class MetricResourceFromEntityAssembler
-  }
 }
 
-' Relationships
-Metric .. MetricCategory
-Metric .. MetricType
-Metric .. NursingHomeId
-
-MetricRepository <|.. MetricCommandServiceImpl
-MetricRepository <|.. MetricQueryServiceImpl
+MetricRepository --> Metric
 
 MetricCommandService <|.. MetricCommandServiceImpl
 MetricQueryService <|.. MetricQueryServiceImpl
 
-MetricCommandServiceImpl --> MetricRepository : uses
-MetricQueryServiceImpl --> MetricRepository : uses
+MetricCommandServiceImpl --> MetricRepository
+MetricQueryServiceImpl --> MetricRepository
 
-NursingHomeAnalyticsController --> MetricQueryService : uses
-NursingHomeAnalyticsController --> MetricCommandService : uses
-
-MetricResourceFromEntityAssembler --> Metric : reads
-MetricResource --> MetricResourceFromEntityAssembler
-
-RecordMetricCommand --> MetricCommandService : execute
-
-GetResidentActivesByNursingHomeIdAndYearQuery --> MetricQueryService : execute
-GetResidentAdmissionsByNursingHomeIdAndDateRangeQuery --> MetricQueryService : execute
-GetResidentAdmissionsByNursingHomeIdAndYearAndMonthQuery --> MetricQueryService : execute
-GetResidentAdmissionsByNursingHomeIdAndYearQuery --> MetricQueryService : execute
-GetStaffHiresByNursingHomeIdAndYearAndMonthQuery --> MetricQueryService : execute
-GetStaffHiresByNursingHomeIdAndYearQuery --> MetricQueryService : execute
-GetStaffTerminationsByNursingHomeIdAndYearAndMonthQuery --> MetricQueryService : execute
-GetStaffTerminationsByNursingHomeIdAndYearQuery --> MetricQueryService : execute
+NursingHomeAnalyticsController --> MetricQueryService
+NursingHomeAnalyticsController --> MetricCommandService
 
 ' Event handlers use command service to record derived metrics
+' from other bounded contexts (nursing, hcm) via domain events
 AdmittedResidentEventHandler --> MetricCommandServiceImpl : uses
 HiredEmployeeEventHandler --> MetricCommandServiceImpl : uses
 RetiredResidentEventHandler --> MetricCommandServiceImpl : uses

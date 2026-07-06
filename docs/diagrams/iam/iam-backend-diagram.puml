@@ -1,19 +1,18 @@
 @startuml
 ' Bounded Context: iam
+' Compact view: aggregates, services, repositories, controllers.
+' Individual commands/queries/resources/assemblers are omitted for readability.
 
-package "application.acl.services" {
-  interface IamContextFacade
-  class IamContextFacadeImpl <<implements IamContextFacade>>
-}
-
-package "application.internal.commandservices" {
-  class UserCommandServiceImpl
-  class RoleCommandServiceImpl
-}
-
-package "application.internal.queryservices" {
-  class UserQueryServiceImpl
-  class RoleQueryServiceImpl
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 50
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
 }
 
 package "domain.model.aggregates" {
@@ -21,7 +20,7 @@ package "domain.model.aggregates" {
     +UserId id
     +Username username
     +Email email
-    +List~Role~ roles
+    +List<Role> roles
     +PasswordHash passwordHash
   }
 }
@@ -33,27 +32,6 @@ package "domain.model.entities" {
   }
 }
 
-package "domain.model.valueobjects" {
-  class Roles
-  class Username
-  class Email
-  class PasswordHash
-}
-
-package "domain.model.commands" {
-  class SignUpCommand
-  class SignInCommand
-  class SeedRolesCommand
-}
-
-package "domain.model.queries" {
-  class GetUserByIdQuery
-  class GetUserByUsernameQuery
-  class GetAllUsersQuery
-  class GetRoleByNameQuery
-  class GetAllRolesQuery
-}
-
 package "domain.services" {
   interface UserCommandService
   interface UserQueryService
@@ -61,119 +39,67 @@ package "domain.services" {
   interface RoleQueryService
 }
 
+package "application (command/query services)" {
+  class UserCommandServiceImpl
+  class UserQueryServiceImpl
+  class RoleCommandServiceImpl
+  class RoleQueryServiceImpl
+}
+
 package "infrastructure.persistence.jpa.repositories" {
   interface UserRepository
   interface RoleRepository
 }
 
-package "infrastructure.hashing" {
+package "infrastructure.hashing / tokens" {
   interface HashingService
-  class BCryptHashingService <<implements HashingService>>
-}
-
-package "infrastructure.tokens" {
   interface TokenService
-  class BearerTokenService <<implements TokenService>>
 }
 
-package "infrastructure.authorization" {
-  package "sfs.configuration" {
-    class WebSecurityConfiguration
-  }
-  package "sfs.model" {
-    class UserDetailsImpl
-    class UsernamePasswordAuthenticationTokenBuilder
-  }
-  package "sfs.pipeline" {
-    class BearerAuthorizationRequestFilter
-    class UnauthorizedRequestHandlerEntryPoint
-  }
-  package "sfs.services" {
-    class UserDetailsServiceImpl
-  }
+package "application.acl.services / interfaces.acl" {
+  interface IamContextFacade
+  class IamContextFacadeImpl
 }
 
 package "interfaces.rest" {
   class AuthenticationController
   class UsersController
   class RolesController
-
-  package "resources" {
-    class SignUpResource
-    class SignInResource
-    class UserResource
-    class RoleResource
-    class AuthenticatedUserResource
-  }
-  package "transform" {
-    class SignUpCommandFromResourceAssembler
-    class SignInCommandFromResourceAssembler
-    class UserResourceFromEntityAssembler
-    class RoleResourceFromEntityAssembler
-    class AuthenticatedUserResourceFromEntityAssembler
-  }
-  package "acl" {
-    interface IamContextFacade
-  }
 }
 
 ' Relationships
 User *-- Role : "has 0..*"
-User .. PasswordHash
-User .. Username
-User .. Email
-Role .. Roles
 
-UserRepository <|.. UserCommandServiceImpl
-UserRepository <|.. UserQueryServiceImpl
-RoleRepository <|.. RoleCommandServiceImpl
-RoleRepository <|.. RoleQueryServiceImpl
+UserRepository --> User
+RoleRepository --> Role
 
 UserCommandService <|.. UserCommandServiceImpl
 UserQueryService <|.. UserQueryServiceImpl
 RoleCommandService <|.. RoleCommandServiceImpl
 RoleQueryService <|.. RoleQueryServiceImpl
 
-UserCommandServiceImpl --> HashingService : uses
-UserCommandServiceImpl --> TokenService : uses
-UserQueryServiceImpl --> TokenService : uses
+UserCommandServiceImpl --> UserRepository
+UserQueryServiceImpl --> UserRepository
+RoleCommandServiceImpl --> RoleRepository
+RoleQueryServiceImpl --> RoleRepository
 
-BCryptHashingService <|.. HashingService
-BearerTokenService <|.. TokenService
+UserCommandServiceImpl --> HashingService
+UserCommandServiceImpl --> TokenService
+UserQueryServiceImpl --> TokenService
 
-AuthenticationController --> UserCommandService : uses
-AuthenticationController --> UserQueryService : uses
-UsersController --> UserCommandService : uses
-UsersController --> UserQueryService : uses
-RolesController --> RoleCommandService : uses
-RolesController --> RoleQueryService : uses
+AuthenticationController --> UserCommandService
+AuthenticationController --> UserQueryService
+UsersController --> UserCommandService
+UsersController --> UserQueryService
+RolesController --> RoleCommandService
+RolesController --> RoleQueryService
 
-SignUpResource --> SignUpCommandFromResourceAssembler
-SignInResource --> SignInCommandFromResourceAssembler
-UserResourceFromEntityAssembler --> User
-RoleResourceFromEntityAssembler --> Role
-AuthenticatedUserResourceFromEntityAssembler --> User
-
-SignUpCommand --> UserCommandService : execute
-SignInCommand --> UserQueryService : execute
-SeedRolesCommand --> RoleCommandService : execute
-
-GetUserByIdQuery --> UserQueryService : execute
-GetUserByUsernameQuery --> UserQueryService : execute
-GetAllUsersQuery --> UserQueryService : execute
-GetRoleByNameQuery --> RoleQueryService : execute
-GetAllRolesQuery --> RoleQueryService : execute
-
-IamContextFacadeImpl --> UserCommandService : delegates
-IamContextFacadeImpl --> UserQueryService : delegates
-IamContextFacadeImpl --> RoleCommandService : delegates
-IamContextFacadeImpl --> RoleQueryService : delegates
-IamContextFacadeImpl --> TokenService : uses
-IamContextFacadeImpl --> HashingService : uses
-
-' Authorization infra usage
-UserDetailsServiceImpl --> UserRepository : uses
-WebSecurityConfiguration --> UserDetailsServiceImpl : configures
-BearerAuthorizationRequestFilter --> TokenService : validates
+IamContextFacadeImpl ..|> IamContextFacade
+IamContextFacadeImpl --> UserCommandService
+IamContextFacadeImpl --> UserQueryService
+IamContextFacadeImpl --> RoleCommandService
+IamContextFacadeImpl --> RoleQueryService
+IamContextFacadeImpl --> TokenService
+IamContextFacadeImpl --> HashingService
 
 @enduml

@@ -5,8 +5,8 @@
 
 left to right direction
 skinparam linetype ortho
-skinparam nodesep 30
-skinparam ranksep 50
+skinparam nodesep 20
+skinparam ranksep 30
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam class {

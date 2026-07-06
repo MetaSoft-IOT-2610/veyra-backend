@@ -1,5 +1,19 @@
 @startuml
 ' Bounded Context: hcm
+' Compact view: aggregates, services, repositories, controllers.
+' Individual commands/queries/resources/assemblers are omitted for readability.
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 50
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
+}
 
 package "domain.model.aggregates" {
   class Staff {
@@ -7,7 +21,7 @@ package "domain.model.aggregates" {
     +PersonProfileId profileId
     +StaffStatus status
     +StaffRole role
-    +List~Contract~ contracts
+    +List<Contract> contracts
     +ContractHistory contractHistory
   }
 }
@@ -21,36 +35,6 @@ package "domain.model.entities" {
   }
 }
 
-package "domain.model.valueobjects" {
-  class ContractHistory
-  class ContractPeriod
-  class ContractStatus
-  class EmergencyContact
-  class NursingHomeId
-  class PersonProfileId
-  class StaffRole
-  class StaffStatus
-  class TypeOfContract
-  class WorkShift
-}
-
-package "domain.model.commands" {
-  class CreateStaffCommand
-  class UpdateStaffCommand
-  class DeleteStaffCommand
-  class AddContractToStaffMemberCommand
-  class UpdateContractStatusCommand
-}
-
-package "domain.model.queries" {
-  class GetStaffByIdQuery
-  class GetAllStaffMemberByNursingHomeIdQuery
-  class GetActiveContractByStaffMemberIdQuery
-  class GetAllContractsByStaffMemberIdQuery
-  class GetContractByStaffMemberIdAndContractIdQuery
-  class GetLastAddedContractByStaffMemberIdQuery
-}
-
 package "domain.model.events" {
   class EmployeeHiredEvent
   class EmployeeSuspendedEvent
@@ -62,12 +46,14 @@ package "domain.services" {
   interface StaffQueryServices
 }
 
-package "application.commandservices" {
-  class StaffCommandServiceImpl <<implements StaffCommandServices>>
+package "application (command/query services)" {
+  class StaffCommandServiceImpl
+  class StaffQueryServiceImpl
 }
 
-package "application.queryservices" {
-  class StaffQueryServiceImpl <<implements StaffQueryServices>>
+package "application.outboundservices.acl" {
+  interface ExternalNursingService
+  interface ExternalProfileService
 }
 
 package "infrastructure.persistence.jpa.repositories" {
@@ -80,70 +66,23 @@ package "interfaces.rest" {
   class StaffController
 }
 
-package "interfaces.rest.resources" {
-  class CreateStaffResource
-  class StaffResource
-  class AddContractResource
-  class ContractResource
-  class UpdateStaffResource
-  class UpdateContractResource
-}
-
-package "interfaces.rest.transform" {
-  class CreateStaffCommandFromResourceAssembler
-  class UpdateStaffCommandFromAssembler
-  class AddContractCommandFromResourceAssembler
-  class StaffResourceFromEntityAssembler
-  class ContractResourceFromEntityAssembler
-}
-
-package "application.outboundservices.acl" {
-  interface ExternalNursingService
-  interface ExternalProfileService
-}
-
 ' Relationships
 Staff *-- Contract : "has 0..*"
-Staff o-- ContractHistory
-Contract .. ContractPeriod
-Contract .. ContractStatus
-Staff .. PersonProfileId
-Staff .. NursingHomeId
 
-StaffRepository <|.. StaffCommandServiceImpl
-StaffRepository <|.. StaffQueryServiceImpl
+StaffRepository --> Staff
 
 StaffCommandServices <|.. StaffCommandServiceImpl
 StaffQueryServices <|.. StaffQueryServiceImpl
 
-StaffCommandServiceImpl --> ExternalNursingService : uses
-StaffCommandServiceImpl --> ExternalProfileService : uses
-StaffQueryServiceImpl --> ExternalProfileService : uses
+StaffCommandServiceImpl --> StaffRepository
+StaffQueryServiceImpl --> StaffRepository
+StaffCommandServiceImpl --> ExternalNursingService
+StaffCommandServiceImpl --> ExternalProfileService
+StaffQueryServiceImpl --> ExternalProfileService
 
-NursingHomeStaffController --> StaffQueryServices : uses
-StaffController --> StaffCommandServices : uses
-StaffContractHistoryController --> StaffQueryServices : uses
-
-CreateStaffResource --> CreateStaffCommandFromResourceAssembler
-UpdateStaffResource --> UpdateStaffCommandFromAssembler
-AddContractResource --> AddContractCommandFromResourceAssembler
-
-StaffResourceFromEntityAssembler --> Staff
-ContractResourceFromEntityAssembler --> Contract
-
-' Commands/Queries -> Services
-CreateStaffCommand --> StaffCommandServices : execute
-UpdateStaffCommand --> StaffCommandServices : execute
-DeleteStaffCommand --> StaffCommandServices : execute
-AddContractToStaffMemberCommand --> StaffCommandServices : execute
-UpdateContractStatusCommand --> StaffCommandServices : execute
-
-GetStaffByIdQuery --> StaffQueryServices : execute
-GetAllStaffMemberByNursingHomeIdQuery --> StaffQueryServices : execute
-GetActiveContractByStaffMemberIdQuery --> StaffQueryServices : execute
-GetAllContractsByStaffMemberIdQuery --> StaffQueryServices : execute
-GetContractByStaffMemberIdAndContractIdQuery --> StaffQueryServices : execute
-GetLastAddedContractByStaffMemberIdQuery --> StaffQueryServices : execute
+NursingHomeStaffController --> StaffQueryServices
+StaffController --> StaffCommandServices
+StaffContractHistoryController --> StaffQueryServices
 
 ' Events emitted by aggregate
 Staff ..> EmployeeHiredEvent : emits
