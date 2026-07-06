@@ -1,33 +1,57 @@
 @startuml
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
+}
+
 ' Bounded Context: health
 
 package "application.internal.commandservices" {
   class AllergyCommandServiceImpl
+  class MedicalConditionCommandServiceImpl
   class VitalSignCommandServiceImpl
+  class VitalSignThresholdCommandServiceImpl
 }
 
 package "application.internal.queryservices" {
   class AllergyQueryServiceImpl
+  class MedicalConditionQueryServiceImpl
   class VitalSignQueryServiceImpl
+  class VitalSignThresholdQueryServiceImpl
 }
 
 package "application.internal.eventhandlers" {
   class AbnormalVitalSignDetectedEventHandler
+  class MeasurementRecordedEventHandler
 }
 
 package "application.internal.outboundservices.acl" {
   class ExternalNursingService
   class ExternalTrackingService
+  class ExternalCommunicationService
+  class ExternalHcmService
 }
 
 package "domain.model.aggregates" {
   class Allergy
+  class MedicalCondition
   class VitalSign
+  class VitalSignThreshold
 }
 
 package "domain.model.commands" {
   class RegisterAllergyCommand
+  class RegisterMedicalConditionCommand
   class RegisterVitalSignCommand
+  class RegisterVitalSignThresholdCommand
   class ValidateVitalSignCommand
 }
 
@@ -40,27 +64,37 @@ package "domain.model.queries" {
   class ExistsVitalSignsByResidentIdQuery
   class GetAllergiesByResidentIdQuery
   class GetAllergyByIdQuery
+  class GetMedicalConditionsByResidentIdQuery
   class GetVitalSignsByResidentIdQuery
   class GetVitalSignsByIdQuery
+  class GetVitalSignThresholdByResidentIdQuery
 }
 
 package "domain.model.valueobjects" {
   class MeasurementId
   class ResidentId
-  class SeverityLevel
-  class TypeOfAllergy
+  enum SeverityLevel
+  enum TypeOfAllergy
+  enum DiagnosisStatus
+  class ValidationResult
 }
 
 package "domain.services" {
   interface AllergyCommandService
   interface AllergyQueryService
+  interface MedicalConditionCommandService
+  interface MedicalConditionQueryService
   interface VitalSignCommandService
   interface VitalSignQueryService
+  interface VitalSignThresholdCommandService
+  interface VitalSignThresholdQueryService
 }
 
 package "infrastructure.persistence.jpa.repositories" {
   interface AllergyRepository
+  interface MedicalConditionRepository
   interface VitalSignRepository
+  interface VitalSignThresholdRepository
 }
 
 package "interfaces.rest.resources" {
@@ -68,6 +102,12 @@ package "interfaces.rest.resources" {
   class RegisterAllergyResource
   class RegisterVitalSignResource
   class VitalSignResource
+  class MedicalConditionResource
+  class RegisterMedicalConditionResource
+  class VitalSignThresholdResource
+  class RegisterVitalSignThresholdResource
+  class EdgeVitalSignThresholdResource
+  class EdgeVitalSignThresholdsResponse
 }
 
 package "interfaces.rest.transform" {
@@ -75,8 +115,14 @@ package "interfaces.rest.transform" {
   class RegisterAllergyCommandFromResourceAssembler
   class RegisterSignVitalCommandFromResourceAssembler
   class VitalSignResourceFromEntityAssembler
+}
+
+package "interfaces.rest" {
   class ResidentAllergiesController
   class VitalSignsController
+  class ResidentMedicalConditionsController
+  class ResidentVitalSignThresholdsController
+  class EdgeVitalSignThresholdsController
 }
 
 Allergy --> ResidentId
@@ -87,17 +133,30 @@ VitalSign --> ResidentId
 VitalSign --> MeasurementId
 VitalSign --> SeverityLevel
 
+MedicalCondition --> ResidentId
+MedicalCondition --> DiagnosisStatus
+
+VitalSignThreshold --> ResidentId
+
 AllergyRepository --> Allergy
 VitalSignRepository --> VitalSign
+MedicalConditionRepository --> MedicalCondition
+VitalSignThresholdRepository --> VitalSignThreshold
 
 AllergyCommandServiceImpl ..|> AllergyCommandService
 AllergyQueryServiceImpl   ..|> AllergyQueryService
 VitalSignCommandServiceImpl ..|> VitalSignCommandService
 VitalSignQueryServiceImpl   ..|> VitalSignQueryService
+MedicalConditionCommandServiceImpl ..|> MedicalConditionCommandService
+MedicalConditionQueryServiceImpl   ..|> MedicalConditionQueryService
+VitalSignThresholdCommandServiceImpl ..|> VitalSignThresholdCommandService
+VitalSignThresholdQueryServiceImpl   ..|> VitalSignThresholdQueryService
 
 AllergyCommandService --> RegisterAllergyCommand
 VitalSignCommandService --> RegisterVitalSignCommand
 VitalSignCommandService --> ValidateVitalSignCommand
+MedicalConditionCommandService --> RegisterMedicalConditionCommand
+VitalSignThresholdCommandService --> RegisterVitalSignThresholdCommand
 
 AllergyQueryService --> ExistsAllergyByResidentIdQuery
 AllergyQueryService --> GetAllergiesByResidentIdQuery
@@ -107,15 +166,33 @@ VitalSignQueryService --> ExistsVitalSignsByResidentIdQuery
 VitalSignQueryService --> GetVitalSignsByResidentIdQuery
 VitalSignQueryService --> GetVitalSignsByIdQuery
 
+MedicalConditionQueryService --> GetMedicalConditionsByResidentIdQuery
+VitalSignThresholdQueryService --> GetVitalSignThresholdByResidentIdQuery
+
 AllergyCommandService --> AllergyRepository
 AllergyQueryService   --> AllergyRepository
 VitalSignCommandService --> VitalSignRepository
 VitalSignQueryService   --> VitalSignRepository
+MedicalConditionCommandService --> MedicalConditionRepository
+MedicalConditionQueryService   --> MedicalConditionRepository
+VitalSignThresholdCommandService --> VitalSignThresholdRepository
+VitalSignThresholdQueryService   --> VitalSignThresholdRepository
+
+' Cross-context lookups
+MedicalConditionCommandServiceImpl --> ExternalNursingService : validates resident exists
+
+' Vital sign anomaly detection reads configured thresholds
+VitalSignCommandServiceImpl --> VitalSignThresholdQueryService : reads
+VitalSignCommandServiceImpl --> ExternalTrackingService : uses
+VitalSignCommandServiceImpl --> ValidationResult : produces
 
 AbnormalVitalSignDetectedEventHandler --> AbnormalVitalSignDetectedEvent
 AbnormalVitalSignDetectedEvent --> VitalSign
 AbnormalVitalSignDetectedEventHandler --> ExternalNursingService
 AbnormalVitalSignDetectedEventHandler --> ExternalTrackingService
+
+' Tracking measurements feed the health vital-sign validation flow
+MeasurementRecordedEventHandler --> VitalSignCommandService : handle(ValidateVitalSignCommand)
 
 ResidentAllergiesController --> AllergyCommandServiceImpl
 ResidentAllergiesController --> AllergyQueryServiceImpl
@@ -126,6 +203,20 @@ VitalSignsController --> VitalSignCommandServiceImpl
 VitalSignsController --> VitalSignQueryServiceImpl
 VitalSignsController --> VitalSignResourceFromEntityAssembler
 VitalSignsController --> RegisterSignVitalCommandFromResourceAssembler
+
+ResidentMedicalConditionsController --> MedicalConditionCommandServiceImpl
+ResidentMedicalConditionsController --> MedicalConditionQueryServiceImpl
+ResidentMedicalConditionsController --> MedicalConditionResource
+ResidentMedicalConditionsController --> RegisterMedicalConditionResource
+
+ResidentVitalSignThresholdsController --> VitalSignThresholdCommandServiceImpl
+ResidentVitalSignThresholdsController --> VitalSignThresholdQueryServiceImpl
+ResidentVitalSignThresholdsController --> VitalSignThresholdResource
+ResidentVitalSignThresholdsController --> RegisterVitalSignThresholdResource
+
+EdgeVitalSignThresholdsController --> VitalSignThresholdRepository : reads directly
+EdgeVitalSignThresholdsController --> EdgeVitalSignThresholdResource
+EdgeVitalSignThresholdsController --> EdgeVitalSignThresholdsResponse
 
 AllergyResourceFromEntityAssembler --> Allergy
 AllergyResourceFromEntityAssembler --> AllergyResource

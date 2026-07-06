@@ -1,14 +1,82 @@
 @startuml
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 40
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam entity {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
+}
+
 title Bounded Context: Health
+
+entity "allergies" as allergies {
+  * id : BIGINT
+  --
+  created_at    : DATETIME(6)
+  updated_at    : DATETIME(6)
+  resident_id   : BIGINT
+  reaction      : VARCHAR(255)
+  allergen_name : VARCHAR(255)
+  type_of_allergy : ENUM(...)
+  severity_level  : ENUM(...)
+}
 
 entity "vital_signs" as vital_signs {
   * id : BIGINT
   --
-  created_at     : DATETIME(6)
-  updated_at     : DATETIME(6)
-  measurement_id : BIGINT
-  resident_id    : BIGINT
-  severity_level : ENUM(...)
+  created_at        : DATETIME(6)
+  updated_at        : DATETIME(6)
+  resident_id       : BIGINT
+  measurement_id    : BIGINT
+  severity_level    : ENUM(...)
+  heart_rate        : INT
+  systolic          : INT
+  diastolic         : INT
+  temperature       : DOUBLE
+  oxygen_saturation : INT
+  respiratory_rate  : INT
+  registered_at     : DATETIME(6)
 }
+
+entity "medical_conditions" as medical_conditions {
+  * id : BIGINT
+  --
+  created_at      : DATETIME(6)
+  updated_at      : DATETIME(6)
+  resident_id     : BIGINT
+  diagnosis_name  : VARCHAR(255)
+  diagnosis_date  : DATE
+  status          : ENUM(...)
+  notes           : VARCHAR(500)
+}
+
+entity "vital_sign_thresholds" as vital_sign_thresholds {
+  * id : BIGINT
+  --
+  created_at             : DATETIME(6)
+  updated_at             : DATETIME(6)
+  resident_id            : BIGINT
+  heart_rate_min         : INT
+  heart_rate_max         : INT
+  systolic_max           : INT
+  diastolic_max          : INT
+  temperature_min        : DOUBLE
+  temperature_max        : DOUBLE
+  oxygen_saturation_min  : INT
+  oxygen_saturation_max  : INT
+  respiratory_rate_min   : INT
+  respiratory_rate_max   : INT
+}
+
+note bottom of allergies
+  resident_id, measurement_id references
+  are cross-context identifiers (nursing.residents,
+  tracking.measurements) — no local FK constraint.
+end note
 
 @enduml
