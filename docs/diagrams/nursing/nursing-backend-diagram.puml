@@ -1,4 +1,17 @@
 @startuml
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
+}
+
 ' Bounded Context: nursing
 
 package "application.acl" {
@@ -6,19 +19,29 @@ package "application.acl" {
 }
 
 package "application.internal.commandservices" {
+  class AdministratorCommandServiceImpl
   class MedicationCommandServicesImpl
   class NursingHomeCommandServiceImpl
+  class RelativeCommandServiceImpl
   class ResidentCommandServiceImpl
 }
 
 package "application.queryservices" {
+  class AdministratorQueryServiceImpl
   class MedicationQueryServiceImpl
   class NursingHomeQueryServiceImpl
+  class RelativeQueryServiceImpl
   class ResidentQueryServiceImpl
+}
+
+package "application.internal.eventhandlers" {
+  class RegisteredRelativeEventHandler
 }
 
 package "application.outboundservices.acl" {
   interface ExternalAclOutbound
+  class ExternalIamService
+  class ExternalProfileService
 }
 
 package "domain.model.aggregates" {
@@ -39,6 +62,16 @@ package "domain.model.aggregates" {
     +Dose dose
     +Stock stock
   }
+  class Administrator {
+    +UserId userId
+  }
+  class Relative {
+    +UserId userId
+    +EmailAddress emailAddress
+    +PersonName personName
+    +Resident resident
+    +NursingHome nursingHome
+  }
 }
 
 package "domain.model.entities" {
@@ -58,18 +91,26 @@ package "domain.model.valueobjects" {
   class NursingHomeId
   class ResidentId
   class MedicationId
+  class UserId
+  class BusinessProfileId
+  class EmergencyContact
+  class LegalRepresentative
 }
 
 package "domain.model.commands" {
   class AssignedStaffMemberToResidentCommand
   class AssignRoomForResidentCommand
+  class AssignUserToRelativeCommand
   class ChangeOfRoomForTheResidentCommand
+  class CreateAdministratorCommand
   class CreateARoomToTheNursingHomeCommand
   class CreateMedicationCommand
   class CreateNursingHomeCommand
+  class CreateRelativeCommand
   class CreateResidentCommand
   class DeleteResidentCommand
   class UpdateNursingHomeCommand
+  class UpdateRelativeCommand
   class UpdateResidentCommand
 }
 
@@ -77,36 +118,49 @@ package "domain.model.queries" {
   class ExistsByNursingHomeIdQuery
   class ExistsByResidentIdQuery
   class GetActiveResidentsByNursingHomeIdQuery
+  class GetAdministratorByIdQuery
+  class GetAdministratorByUserIdQuery
   class GetAllMedicationsByResidentIdQuery
   class GetAllNursingHomeQuery
+  class GetAllRelativesByNursingHomeIdQuery
   class GetAllResidentsByNursingHomeIdQuery
   class GetLastAddedRoomByNursingHomeIdQuery
   class GetMedicationAdministrationsByResidentIdQuery
   class GetMedicationByIdQuery
+  class GetNursingHomeByAdministratorIdQuery
   class GetNursingHomeByIdQuery
+  class GetRelativeByIdQuery
   class GetResidentByIdQuery
   class GetResidentByPersonProfileQuery
+  class GetResidentByRelativeIdQuery
   class GetRoomByNursingHomeIdAndRoomNumberQuery
 }
 
 package "domain.model.events" {
   class AdmittedResidentEvent
   class MedicationStockLowEvent
+  class RegisteredRelativeEvent
   class RetiredResidentEvent
 }
 
 package "domain.services" {
+  interface AdministratorCommandService
+  interface AdministratorQueryService
   interface MedicationCommandServices
   interface MedicationQueryServices
   interface NursingHomeCommandServices
   interface NursingHomeQueryServices
+  interface RelativeCommandService
+  interface RelativeQueryService
   interface ResidentCommandServices
   interface ResidentQueryServices
 }
 
 package "infrastructure.persistence.jpa.repositories" {
+  interface AdministratorRepository
   interface MedicationRepository
   interface NursingHomeRepository
+  interface RelativeRepository
   interface ResidentRepository
   interface RoomRepository
 }
@@ -116,38 +170,58 @@ package "interfaces.acl" {
 }
 
 package "interfaces.rest" {
+  class AdministratorsController
+  class AdministratorNursingHomesController
   class MedicationsController
+  class NursingHomeRelativesController
   class NursingHomeResidentsController
   class NursingHomeRoomsController
   class NursingHomesController
+  class RelativeResidentsController
   class ResidentMedicationsController
   class ResidentsController
 
   package "resources" {
+    class AdministratorResource
+    class CreateAdministratorResource
+    class CreateRelativeResource
     class MedicationResource
     class NursingHomeResource
+    class RelativeResource
     class ResidentResource
     class RoomResource
+    class UpdateRelativeResource
   }
 
   package "transform" {
+    class AdministratorResourceFromEntityAssembler
+    class CreateAdministratorCommandFromResourceAssembler
+    class CreateRelativeCommandFromResourceAssembler
     class MedicationResourceFromEntityAssembler
     class CreateMedicationCommandFromResourceAssembler
+    class RelativeResourceFromEntityAssembler
     class ResidentResourceFromEntityAssembler
     class RoomCommandFromResourceAssembler
+    class UpdateRelativeCommandFromResourceAssembler
   }
 }
 
 ' Aggregate relationships
 NursingHome *-- Room : "has 0..*"
 NursingHome *-- Resident : "hosts 0..*"
+NursingHome --> Administrator : "administrator_id (ManyToOne)"
+NursingHome *-- Relative : "0..*"
 Resident o-- Room : "assigned to 0..1"
 Resident *-- Medication : "receives 0..*"
+Relative "1" -- "1" Resident : "resident_id (OneToOne)"
 Medication .. Stock
 Medication .. Dose
 Room .. RoomId
 Resident .. ResidentId
 NursingHome .. NursingHomeId
+NursingHome .. BusinessProfileId
+Administrator .. UserId
+Relative .. UserId
 
 ' Repositories -> Implementations
 MedicationRepository <|.. MedicationCommandServicesImpl
@@ -158,6 +232,10 @@ ResidentRepository <|.. ResidentCommandServiceImpl
 ResidentRepository <|.. ResidentQueryServiceImpl
 RoomRepository <|.. NursingHomeCommandServiceImpl
 RoomRepository <|.. NursingHomeQueryServiceImpl
+AdministratorRepository <|.. AdministratorCommandServiceImpl
+AdministratorRepository <|.. AdministratorQueryServiceImpl
+RelativeRepository <|.. RelativeCommandServiceImpl
+RelativeRepository <|.. RelativeQueryServiceImpl
 
 ' Service interfaces -> Implementations
 MedicationCommandServices <|.. MedicationCommandServicesImpl
@@ -166,6 +244,10 @@ NursingHomeCommandServices <|.. NursingHomeCommandServiceImpl
 NursingHomeQueryServices <|.. NursingHomeQueryServiceImpl
 ResidentCommandServices <|.. ResidentCommandServiceImpl
 ResidentQueryServices <|.. ResidentQueryServiceImpl
+AdministratorCommandService <|.. AdministratorCommandServiceImpl
+AdministratorQueryService <|.. AdministratorQueryServiceImpl
+RelativeCommandService <|.. RelativeCommandServiceImpl
+RelativeQueryService <|.. RelativeQueryServiceImpl
 
 ' Implementations use repositories and outbound services
 MedicationCommandServicesImpl --> MedicationRepository : uses
@@ -174,11 +256,24 @@ MedicationQueryServiceImpl --> MedicationRepository : uses
 
 NursingHomeCommandServiceImpl --> NursingHomeRepository : uses
 NursingHomeCommandServiceImpl --> RoomRepository : uses
+NursingHomeCommandServiceImpl --> ExternalProfileService : uses
 NursingHomeQueryServiceImpl --> NursingHomeRepository : uses
+NursingHomeQueryServiceImpl --> AdministratorRepository : findByAdministratorId
 
 ResidentCommandServiceImpl --> ResidentRepository : uses
 ResidentCommandServiceImpl --> NursingHomeRepository : uses
+ResidentCommandServiceImpl --> ExternalProfileService : uses
 ResidentQueryServiceImpl --> ResidentRepository : uses
+ResidentQueryServiceImpl --> RelativeRepository : resolves relative's resident
+
+AdministratorCommandServiceImpl --> AdministratorRepository : uses
+AdministratorCommandServiceImpl --> ExternalIamService : creates IAM user (ROLE_ADMIN)
+AdministratorQueryServiceImpl --> AdministratorRepository : uses
+
+RelativeCommandServiceImpl --> RelativeRepository : uses
+RelativeCommandServiceImpl --> NursingHomeRepository : uses
+RelativeCommandServiceImpl --> ResidentRepository : uses
+RelativeQueryServiceImpl --> RelativeRepository : uses
 
 ' Controllers use services
 MedicationsController --> MedicationCommandServices : uses
@@ -194,28 +289,70 @@ NursingHomesController --> NursingHomeQueryServices : uses
 NursingHomeResidentsController --> ResidentQueryServices : uses
 NursingHomeRoomsController --> RoomRepository : uses
 
+AdministratorsController --> AdministratorCommandService : uses
+AdministratorsController --> AdministratorQueryService : uses
+AdministratorsController --> AdministratorResourceFromEntityAssembler
+AdministratorsController --> CreateAdministratorCommandFromResourceAssembler
+AdministratorNursingHomesController --> NursingHomeCommandServices : uses
+AdministratorNursingHomesController --> NursingHomeQueryServices : uses
+
+NursingHomeRelativesController --> RelativeCommandService : uses
+NursingHomeRelativesController --> RelativeQueryService : uses
+NursingHomeRelativesController --> NursingHomeQueryServices : uses
+NursingHomeRelativesController --> RelativeResourceFromEntityAssembler
+NursingHomeRelativesController --> CreateRelativeCommandFromResourceAssembler
+RelativeResidentsController --> ResidentQueryServices : uses
+RelativeResidentsController --> RelativeCommandService : uses
+RelativeResidentsController --> UpdateRelativeCommandFromResourceAssembler
+
 ' Resources and assemblers
 CreateMedicationCommandFromResourceAssembler --> CreateMedicationCommand
 MedicationResourceFromEntityAssembler --> Medication
 ResidentResourceFromEntityAssembler --> Resident
 RoomCommandFromResourceAssembler --> CreateARoomToTheNursingHomeCommand
+CreateAdministratorCommandFromResourceAssembler --> CreateAdministratorResource
+CreateAdministratorCommandFromResourceAssembler --> CreateAdministratorCommand
+AdministratorResourceFromEntityAssembler --> Administrator
+AdministratorResourceFromEntityAssembler --> AdministratorResource
+CreateRelativeCommandFromResourceAssembler --> CreateRelativeResource
+CreateRelativeCommandFromResourceAssembler --> CreateRelativeCommand
+RelativeResourceFromEntityAssembler --> Relative
+RelativeResourceFromEntityAssembler --> RelativeResource
+UpdateRelativeCommandFromResourceAssembler --> UpdateRelativeResource
+UpdateRelativeCommandFromResourceAssembler --> UpdateRelativeCommand
 
 ' Commands/Queries -> Services
 CreateMedicationCommand --> MedicationCommandServices : execute
 CreateResidentCommand --> ResidentCommandServices : execute
 AssignRoomForResidentCommand --> ResidentCommandServices : execute
 CreateARoomToTheNursingHomeCommand --> NursingHomeCommandServices : execute
+CreateAdministratorCommand --> AdministratorCommandService : execute
+CreateRelativeCommand --> RelativeCommandService : execute
+UpdateRelativeCommand --> RelativeCommandService : execute
+AssignUserToRelativeCommand --> RelativeCommandService : execute
 
 GetMedicationByIdQuery --> MedicationQueryServices : execute
 GetAllMedicationsByResidentIdQuery --> MedicationQueryServices : execute
 GetResidentByIdQuery --> ResidentQueryServices : execute
 GetAllResidentsByNursingHomeIdQuery --> ResidentQueryServices : execute
 GetRoomByNursingHomeIdAndRoomNumberQuery --> NursingHomeQueryServices : execute
+GetAdministratorByIdQuery --> AdministratorQueryService : execute
+GetAdministratorByUserIdQuery --> AdministratorQueryService : execute
+GetNursingHomeByAdministratorIdQuery --> NursingHomeQueryServices : execute
+GetAllRelativesByNursingHomeIdQuery --> RelativeQueryService : execute
+GetRelativeByIdQuery --> RelativeQueryService : execute
+GetResidentByRelativeIdQuery --> ResidentQueryServices : execute
 
 ' Events and handlers (conceptual)
 AdmittedResidentEvent ..> ResidentCommandServiceImpl : triggers
 MedicationStockLowEvent ..> MedicationCommandServicesImpl : alerts
 RetiredResidentEvent ..> ResidentCommandServiceImpl : triggers
+
+Relative --> RegisteredRelativeEvent : raises (on registration)
+RegisteredRelativeEventHandler --> RegisteredRelativeEvent : listens (async)
+RegisteredRelativeEventHandler --> ExternalIamService : creates relative IAM account
+RegisteredRelativeEventHandler --> RelativeCommandService : handle(AssignUserToRelativeCommand)
+RegisteredRelativeEventHandler --> ExternalCommunicationService : sends activation email
 
 ' ACL facade usage
 NursingContextFacadeImpl --> ResidentCommandServiceImpl : delegates
