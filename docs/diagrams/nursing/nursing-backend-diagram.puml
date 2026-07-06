@@ -2,11 +2,12 @@
 ' Bounded Context: nursing
 ' Compact view: aggregates, services, repositories, controllers.
 ' Individual commands/queries/resources/assemblers are omitted for readability.
+' Service interfaces are folded into their impl (<<service>>) to save space.
 
 left to right direction
 skinparam linetype ortho
-skinparam nodesep 20
-skinparam ranksep 30
+skinparam nodesep 15
+skinparam ranksep 25
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam class {
@@ -63,30 +64,17 @@ package "domain.model.events" {
   class RetiredResidentEvent
 }
 
-package "domain.services" {
-  interface AdministratorCommandService
-  interface AdministratorQueryService
-  interface MedicationCommandServices
-  interface MedicationQueryServices
-  interface NursingHomeCommandServices
-  interface NursingHomeQueryServices
-  interface RelativeCommandService
-  interface RelativeQueryService
-  interface ResidentCommandServices
-  interface ResidentQueryServices
-}
-
-package "application.internal (command/query services)" {
-  class AdministratorCommandServiceImpl
-  class AdministratorQueryServiceImpl
-  class MedicationCommandServicesImpl
-  class MedicationQueryServiceImpl
-  class NursingHomeCommandServiceImpl
-  class NursingHomeQueryServiceImpl
-  class RelativeCommandServiceImpl
-  class RelativeQueryServiceImpl
-  class ResidentCommandServiceImpl
-  class ResidentQueryServiceImpl
+package "application (command/query services)" {
+  class MedicationCommandServicesImpl <<service>>
+  class MedicationQueryServiceImpl <<service>>
+  class NursingHomeCommandServiceImpl <<service>>
+  class NursingHomeQueryServiceImpl <<service>>
+  class ResidentCommandServiceImpl <<service>>
+  class ResidentQueryServiceImpl <<service>>
+  class AdministratorCommandServiceImpl <<service>>
+  class AdministratorQueryServiceImpl <<service>>
+  class RelativeCommandServiceImpl <<service>>
+  class RelativeQueryServiceImpl <<service>>
 }
 
 package "application.internal.eventhandlers" {
@@ -144,19 +132,7 @@ RoomRepository --> Room
 AdministratorRepository --> Administrator
 RelativeRepository --> Relative
 
-' Service interfaces -> Implementations
-MedicationCommandServices <|.. MedicationCommandServicesImpl
-MedicationQueryServices <|.. MedicationQueryServiceImpl
-NursingHomeCommandServices <|.. NursingHomeCommandServiceImpl
-NursingHomeQueryServices <|.. NursingHomeQueryServiceImpl
-ResidentCommandServices <|.. ResidentCommandServiceImpl
-ResidentQueryServices <|.. ResidentQueryServiceImpl
-AdministratorCommandService <|.. AdministratorCommandServiceImpl
-AdministratorQueryService <|.. AdministratorQueryServiceImpl
-RelativeCommandService <|.. RelativeCommandServiceImpl
-RelativeQueryService <|.. RelativeQueryServiceImpl
-
-' Implementations use repositories and outbound services
+' Services use repositories and outbound services
 MedicationCommandServicesImpl --> MedicationRepository
 MedicationQueryServiceImpl --> MedicationRepository
 
@@ -173,7 +149,7 @@ ResidentQueryServiceImpl --> ResidentRepository
 ResidentQueryServiceImpl --> RelativeRepository : resolves relative's resident
 
 AdministratorCommandServiceImpl --> AdministratorRepository
-AdministratorCommandServiceImpl --> ExternalIamService : creates IAM user (ROLE_ADMIN)
+AdministratorCommandServiceImpl --> ExternalIamService
 AdministratorQueryServiceImpl --> AdministratorRepository
 
 RelativeCommandServiceImpl --> RelativeRepository
@@ -182,25 +158,25 @@ RelativeCommandServiceImpl --> ResidentRepository
 RelativeQueryServiceImpl --> RelativeRepository
 
 ' Controllers use services
-MedicationsController --> MedicationCommandServices
-MedicationsController --> MedicationQueryServices
-ResidentsController --> ResidentCommandServices
-ResidentsController --> ResidentQueryServices
-ResidentMedicationsController --> MedicationCommandServices
-ResidentMedicationsController --> MedicationQueryServices
-NursingHomesController --> NursingHomeCommandServices
-NursingHomesController --> NursingHomeQueryServices
-NursingHomeResidentsController --> ResidentQueryServices
+MedicationsController --> MedicationCommandServicesImpl
+MedicationsController --> MedicationQueryServiceImpl
+ResidentsController --> ResidentCommandServiceImpl
+ResidentsController --> ResidentQueryServiceImpl
+ResidentMedicationsController --> MedicationCommandServicesImpl
+ResidentMedicationsController --> MedicationQueryServiceImpl
+NursingHomesController --> NursingHomeCommandServiceImpl
+NursingHomesController --> NursingHomeQueryServiceImpl
+NursingHomeResidentsController --> ResidentQueryServiceImpl
 NursingHomeRoomsController --> RoomRepository
-AdministratorsController --> AdministratorCommandService
-AdministratorsController --> AdministratorQueryService
-AdministratorNursingHomesController --> NursingHomeCommandServices
-AdministratorNursingHomesController --> NursingHomeQueryServices
-NursingHomeRelativesController --> RelativeCommandService
-NursingHomeRelativesController --> RelativeQueryService
-NursingHomeRelativesController --> NursingHomeQueryServices
-RelativeResidentsController --> ResidentQueryServices
-RelativeResidentsController --> RelativeCommandService
+AdministratorsController --> AdministratorCommandServiceImpl
+AdministratorsController --> AdministratorQueryServiceImpl
+AdministratorNursingHomesController --> NursingHomeCommandServiceImpl
+AdministratorNursingHomesController --> NursingHomeQueryServiceImpl
+NursingHomeRelativesController --> RelativeCommandServiceImpl
+NursingHomeRelativesController --> RelativeQueryServiceImpl
+NursingHomeRelativesController --> NursingHomeQueryServiceImpl
+RelativeResidentsController --> ResidentQueryServiceImpl
+RelativeResidentsController --> RelativeCommandServiceImpl
 
 ' Events and handlers
 AdmittedResidentEvent ..> ResidentCommandServiceImpl : triggers
@@ -210,7 +186,7 @@ RetiredResidentEvent ..> ResidentCommandServiceImpl : triggers
 Relative --> RegisteredRelativeEvent : raises (on registration)
 RegisteredRelativeEventHandler --> RegisteredRelativeEvent : listens (async)
 RegisteredRelativeEventHandler --> ExternalIamService : creates relative IAM account
-RegisteredRelativeEventHandler --> RelativeCommandService : handle(AssignUserToRelativeCommand)
+RegisteredRelativeEventHandler --> RelativeCommandServiceImpl : links user
 RegisteredRelativeEventHandler --> ExternalCommunicationService : sends activation email
 
 ' ACL facade usage
