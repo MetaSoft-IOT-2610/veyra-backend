@@ -19,10 +19,10 @@ class ActivityAggregateTest {
                 1L,
                 2L,
                 3L,
-                ActivityType.valueOf("OCCUPATIONAL_THERAPY"),
-                "Terapia ocupacional",
+                ActivityType.valueOf("BATH"),
+                "Baño",
                 true,
-                List.of(RecurringDay.valueOf("MONDAY"), RecurringDay.valueOf("WEDNESDAY"))
+                List.of(RecurringDay.valueOf("MON"), RecurringDay.valueOf("WED"))
         );
     }
 
