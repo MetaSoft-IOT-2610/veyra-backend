@@ -1,27 +1,75 @@
 @startuml
-'https://plantuml.com/class-diagram
-
-abstract class AbstractList
-abstract AbstractCollection
-interface List
-interface Collection
-
-List <|-- AbstractList
-Collection <|-- AbstractCollection
-
-Collection <|- List
-AbstractCollection <|- AbstractList
-AbstractList <|-- ArrayList
-
-class ArrayList {
-Object[] elementData
-size()
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 40
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam entity {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
 }
 
-enum TimeUnit {
-DAYS
-HOURS
-MINUTES
+title Bounded Context: Communication
+
+entity "conversations" as conversations {
+  * id : BIGINT
+  --
+  created_at      : DATETIME(6)
+  updated_at      : DATETIME(6)
+  type            : ENUM(...)
+  group_name      : VARCHAR(100)
+  status          : ENUM(...)
+  last_message_at : DATETIME(6)
 }
+
+entity "conversation_participants" as conversation_participants {
+  * id : BIGINT
+  --
+  created_at      : DATETIME(6)
+  updated_at      : DATETIME(6)
+  conversation_id : BIGINT
+  user_id         : BIGINT
+  joined_at       : DATETIME(6)
+  last_read_at    : DATETIME(6)
+}
+
+entity "messages" as messages {
+  * id : BIGINT
+  --
+  created_at      : DATETIME(6)
+  updated_at      : DATETIME(6)
+  conversation_id : BIGINT
+  sender_user_id  : BIGINT
+  text            : VARCHAR(2000)
+}
+
+entity "user_notifications" as user_notifications {
+  * id : BIGINT
+  --
+  created_at : DATETIME(6)
+  updated_at : DATETIME(6)
+  user_id    : BIGINT
+  title      : VARCHAR(255)
+  body       : TEXT
+  status     : ENUM(...)
+  read_at    : DATETIME(6)
+}
+
+entity "user_push_tokens" as user_push_tokens {
+  * id : BIGINT
+  --
+  created_at   : DATETIME(6)
+  updated_at   : DATETIME(6)
+  user_id      : BIGINT
+  token        : VARCHAR(512)
+  platform     : ENUM(...)
+  last_seen_at : DATETIME(6)
+}
+
+conversations ||--o{ conversation_participants : "1..*"
+conversations ||--o{ messages                  : "1..*"
 
 @enduml

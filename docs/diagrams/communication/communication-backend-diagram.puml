@@ -1,27 +1,308 @@
 @startuml
-'https://plantuml.com/class-diagram
-
-abstract class AbstractList
-abstract AbstractCollection
-interface List
-interface Collection
-
-List <|-- AbstractList
-Collection <|-- AbstractCollection
-
-Collection <|- List
-AbstractCollection <|- AbstractList
-AbstractList <|-- ArrayList
-
-class ArrayList {
-Object[] elementData
-size()
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
 }
 
-enum TimeUnit {
-DAYS
-HOURS
-MINUTES
+' Bounded Context: communication
+
+package "domain.model.aggregates" {
+  class Conversation {
+    +type : ConversationType
+    +groupName : String
+    +status : ConversationStatus
+    +lastMessageAt : LocalDateTime
+    +participants : Set<ConversationParticipant>
+  }
+  class Message {
+    +conversationId : Long
+    +senderUserId : Long
+    +content : MessageContent
+  }
+  class UserNotification {
+    +userId : Long
+    +title : String
+    +body : String
+    +status : NotificationStatus
+    +readAt : LocalDateTime
+  }
+  class UserPushToken {
+    +userId : Long
+    +token : String
+    +platform : PushPlatform
+    +lastSeenAt : LocalDateTime
+  }
 }
+
+package "domain.model.entities" {
+  class ConversationParticipant {
+    +userId : Long
+    +joinedAt : LocalDateTime
+    +lastReadAt : LocalDateTime
+  }
+}
+
+package "domain.model.valueobjects" {
+  enum ConversationStatus
+  enum ConversationType
+  class EmailRecipients
+  class MessageContent
+  enum NotificationStatus
+  enum PushPlatform
+}
+
+package "domain.model.commands" {
+  class CreateConversationCommand
+  class CreateUserNotificationCommand
+  class MarkAllNotificationsAsReadCommand
+  class MarkConversationAsReadCommand
+  class MarkNotificationAsReadCommand
+  class RegisterUserPushTokenCommand
+  class SendHtmlEmailCommand
+  class SendMessageCommand
+  class SendPlainEmailCommand
+  class SendPushNotificationCommand
+  class SendPushNotificationToUserCommand
+  class SendRenderedTemplateEmailCommand
+  class SendTemplateEmailCommand
+  class UnregisterUserPushTokenCommand
+}
+
+package "domain.model.queries" {
+  class GetConversationByIdQuery
+  class GetConversationMessagesQuery
+  class GetConversationsByUserQuery
+  class GetUnreadConversationCountQuery
+  class GetUnreadNotificationCountQuery
+  class GetUserNotificationsQuery
+  class GetUserPushTokensQuery
+}
+
+package "domain.model.events" {
+  class MessageSentEvent
+}
+
+package "domain.services" {
+  interface ConversationCommandService
+  interface ConversationQueryService
+  interface EmailNotificationCommandService
+  interface MessageCommandService
+  interface MessageQueryService
+  interface PushNotificationCommandService
+  interface UserNotificationCommandService
+  interface UserNotificationQueryService
+  interface UserPushTokenCommandService
+  interface UserPushTokenQueryService
+}
+
+package "application.internal.commandservices" {
+  class ConversationCommandServiceImpl
+  class EmailNotificationCommandServiceImpl
+  class MessageCommandServiceImpl
+  class PushNotificationCommandServiceImpl
+  class UserNotificationCommandServiceImpl
+  class UserPushTokenCommandServiceImpl
+}
+
+package "application.internal.queryservices" {
+  class ConversationQueryServiceImpl
+  class MessageQueryServiceImpl
+  class UserNotificationQueryServiceImpl
+  class UserPushTokenQueryServiceImpl
+}
+
+package "application.internal.eventhandlers" {
+  class MessageBroadcastEventHandler
+}
+
+package "application.internal.outboundservices.acl" {
+  class ExternalIamService
+}
+
+package "application.internal.outboundservices.fcm" {
+  interface FirebaseMessagingGateway
+}
+
+package "application.internal.outboundservices.sendgrid" {
+  interface SendGridGateway
+}
+
+package "infrastructure.providers.fcm.services" {
+  class FirebaseMessagingGatewayImpl
+}
+
+package "infrastructure.providers.sendgrid.services" {
+  class SendGridGatewayImpl
+}
+
+package "infrastructure.providers.stub" {
+  class DevFirebaseMessagingGatewayStub
+  class DevSendGridGatewayStub
+}
+
+package "infrastructure.persistence.jpa.repositories" {
+  interface ConversationRepository
+  interface MessageRepository
+  interface UserNotificationRepository
+  interface UserPushTokenRepository
+}
+
+package "application.acl" {
+  class CommunicationContextFacadeImpl <<implements CommunicationContextFacade>>
+}
+
+package "interfaces.acl" {
+  interface CommunicationContextFacade
+}
+
+package "interfaces.rest" {
+  class ConversationMessagesController
+  class ConversationsController
+  class EmailNotificationsController
+  class PushNotificationsController
+  class UserConversationsController
+  class UserNotificationsController
+  class UserPushTokensController
+
+  package "resources" {
+    class ChatMessageResource
+    class ConversationResource
+    class ConversationSummaryResource
+    class CreateConversationResource
+    class SendMessageResource
+    class UserNotificationResource
+    class UserPushTokenResource
+  }
+
+  package "transform" {
+    class ChatMessageAssembler
+    class ConversationAssembler
+    class UserNotificationAssembler
+    class UserPushTokenAssembler
+  }
+}
+
+' === RELACIONES ===
+
+' Aggregate composition
+Conversation *-- ConversationParticipant : "1..*"
+Conversation .. ConversationStatus
+Conversation .. ConversationType
+Message .. MessageContent
+UserNotification .. NotificationStatus
+UserPushToken .. PushPlatform
+
+' Repositories -> Aggregates
+ConversationRepository --> Conversation
+MessageRepository --> Message
+UserNotificationRepository --> UserNotification
+UserPushTokenRepository --> UserPushToken
+
+' Service interfaces -> Implementations
+ConversationCommandService <|.. ConversationCommandServiceImpl
+ConversationQueryService <|.. ConversationQueryServiceImpl
+EmailNotificationCommandService <|.. EmailNotificationCommandServiceImpl
+MessageCommandService <|.. MessageCommandServiceImpl
+MessageQueryService <|.. MessageQueryServiceImpl
+PushNotificationCommandService <|.. PushNotificationCommandServiceImpl
+UserNotificationCommandService <|.. UserNotificationCommandServiceImpl
+UserNotificationQueryService <|.. UserNotificationQueryServiceImpl
+UserPushTokenCommandService <|.. UserPushTokenCommandServiceImpl
+UserPushTokenQueryService <|.. UserPushTokenQueryServiceImpl
+
+' Implementations use repositories
+ConversationCommandServiceImpl --> ConversationRepository : uses
+ConversationQueryServiceImpl --> ConversationRepository : uses
+MessageCommandServiceImpl --> MessageRepository : uses
+MessageQueryServiceImpl --> MessageRepository : uses
+UserNotificationCommandServiceImpl --> UserNotificationRepository : uses
+UserNotificationQueryServiceImpl --> UserNotificationRepository : uses
+UserPushTokenCommandServiceImpl --> UserPushTokenRepository : uses
+UserPushTokenQueryServiceImpl --> UserPushTokenRepository : uses
+
+' Gateways used by command services
+EmailNotificationCommandServiceImpl --> SendGridGateway : uses
+PushNotificationCommandServiceImpl --> FirebaseMessagingGateway : uses
+UserPushTokenCommandServiceImpl --> ExternalIamService : uses
+
+FirebaseMessagingGateway <|.. FirebaseMessagingGatewayImpl
+FirebaseMessagingGateway <|.. DevFirebaseMessagingGatewayStub
+SendGridGateway <|.. SendGridGatewayImpl
+SendGridGateway <|.. DevSendGridGatewayStub
+
+' Commands/Queries -> Services
+CreateConversationCommand --> ConversationCommandService : execute
+MarkConversationAsReadCommand --> ConversationCommandService : execute
+SendMessageCommand --> MessageCommandService : execute
+CreateUserNotificationCommand --> UserNotificationCommandService : execute
+MarkNotificationAsReadCommand --> UserNotificationCommandService : execute
+MarkAllNotificationsAsReadCommand --> UserNotificationCommandService : execute
+RegisterUserPushTokenCommand --> UserPushTokenCommandService : execute
+UnregisterUserPushTokenCommand --> UserPushTokenCommandService : execute
+SendPlainEmailCommand --> EmailNotificationCommandService : execute
+SendHtmlEmailCommand --> EmailNotificationCommandService : execute
+SendTemplateEmailCommand --> EmailNotificationCommandService : execute
+SendRenderedTemplateEmailCommand --> EmailNotificationCommandService : execute
+SendPushNotificationCommand --> PushNotificationCommandService : execute
+SendPushNotificationToUserCommand --> PushNotificationCommandService : execute
+
+GetConversationByIdQuery --> ConversationQueryService : execute
+GetConversationsByUserQuery --> ConversationQueryService : execute
+GetUnreadConversationCountQuery --> ConversationQueryService : execute
+GetConversationMessagesQuery --> MessageQueryService : execute
+GetUserNotificationsQuery --> UserNotificationQueryService : execute
+GetUnreadNotificationCountQuery --> UserNotificationQueryService : execute
+GetUserPushTokensQuery --> UserPushTokenQueryService : execute
+
+' Domain event flow (real-time chat broadcast)
+Message --> MessageSentEvent : raises
+MessageBroadcastEventHandler --> MessageSentEvent : listens (AFTER_COMMIT)
+MessageBroadcastEventHandler --> ChatMessageAssembler : uses
+
+' ACL facade
+CommunicationContextFacadeImpl ..|> CommunicationContextFacade
+CommunicationContextFacadeImpl --> EmailNotificationCommandService : delegates
+CommunicationContextFacadeImpl --> PushNotificationCommandService : delegates
+CommunicationContextFacadeImpl --> UserPushTokenCommandService : delegates
+CommunicationContextFacadeImpl --> UserNotificationCommandService : delegates
+CommunicationContextFacadeImpl --> ConversationCommandService : delegates
+
+' Controllers use services
+ConversationsController --> ConversationCommandService : uses
+ConversationsController --> ConversationQueryService : uses
+ConversationsController --> ConversationAssembler : uses
+ConversationMessagesController --> MessageCommandService : uses
+ConversationMessagesController --> MessageQueryService : uses
+ConversationMessagesController --> ChatMessageAssembler : uses
+UserConversationsController --> ConversationQueryService : uses
+UserConversationsController --> ConversationCommandService : uses
+UserNotificationsController --> UserNotificationCommandService : uses
+UserNotificationsController --> UserNotificationQueryService : uses
+UserNotificationsController --> UserNotificationAssembler : uses
+UserPushTokensController --> UserPushTokenCommandService : uses
+UserPushTokensController --> UserPushTokenQueryService : uses
+UserPushTokensController --> UserPushTokenAssembler : uses
+EmailNotificationsController --> EmailNotificationCommandService : uses
+PushNotificationsController --> PushNotificationCommandService : uses
+PushNotificationsController --> UserPushTokenAssembler : uses
+
+' Resources and assemblers
+ConversationAssembler --> Conversation
+ConversationAssembler --> ConversationResource
+ConversationAssembler --> ConversationSummaryResource
+ChatMessageAssembler --> Message
+ChatMessageAssembler --> ChatMessageResource
+UserNotificationAssembler --> UserNotification
+UserNotificationAssembler --> UserNotificationResource
+UserPushTokenAssembler --> UserPushToken
+UserPushTokenAssembler --> UserPushTokenResource
 
 @enduml
