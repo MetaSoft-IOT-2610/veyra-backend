@@ -1,20 +1,72 @@
 @startuml
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 40
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam entity {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
+}
+
 title Bounded Context: Tracking
 
-entity "measurements" as measurements {
+entity "devices" as devices {
   * id : BIGINT
   --
-  created_at        : DATETIME(6)
-  updated_at        : DATETIME(6)
-  systolic          : INT
-  diastolic         : INT
-  device_id         : VARCHAR(255)
-  heart_rate        : INT
-  oxygen_saturation : INT
-  resident_id       : BIGINT
-  respiratory_rate  : INT
-  temperature       : DOUBLE
-  timestamp         : DATETIME(6)
+  created_at         : DATETIME(6)
+  updated_at         : DATETIME(6)
+  mac_address        : VARCHAR(17)
+  resident_id        : BIGINT
+  nursing_home_id    : BIGINT
+  external_device_id : VARCHAR(128)
+  assigned_at        : DATETIME(6)
+  status             : ENUM(...)
+  iot_status         : ENUM(...)
+  device_type        : ENUM(...)
 }
+
+entity "locations" as locations << (D,#77AAFF) MongoDB document >> {
+  * id : STRING (ObjectId)
+  --
+  created_at  : DATETIME(6)
+  updated_at  : DATETIME(6)
+  device_id   : BIGINT
+  latitude    : DOUBLE
+  longitude   : DOUBLE
+  recorded_at : DATETIME(6)
+}
+
+entity "measurements" as measurements << (D,#77AAFF) MongoDB document >> {
+  * id : STRING (ObjectId)
+  --
+  created_at           : DATETIME(6)
+  updated_at           : DATETIME(6)
+  device_id            : BIGINT
+  timestamp            : DATETIME(6)
+  heart_rate           : INT
+  temperature          : DOUBLE
+  ambient_temperature  : DOUBLE
+  oxygen_saturation    : INT
+  clinical_record      : BIT(1)
+}
+
+note bottom of locations
+  Not a relational table: persisted as a
+  MongoDB document (collection "locations").
+  device_id is a plain reference, no DB-level FK.
+end note
+
+note bottom of measurements
+  Not a relational table: persisted as a
+  MongoDB document (collection "measurements").
+  device_id is a plain reference, no DB-level FK.
+end note
+
+devices ..> locations    : "1..* (application-level, not enforced)"
+devices ..> measurements : "1..* (application-level, not enforced)"
 
 @enduml

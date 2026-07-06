@@ -1,7 +1,26 @@
 @startuml
+' === OPTIMIZACIONES DE DISEÑO ===
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor White
+  ArrowColor #444444
+  BorderColor #333333
+}
+
 ' Bounded Context: tracking
 
+package "application.acl" {
+  class TrackingContextFacadeImpl <<implements TrackingContextFacade>>
+}
+
 package "application.internal.commandservices" {
+  class DeviceCommandServiceImpl
+  class LocationCommandServiceImpl
   class MeasurementCommandServiceImpl
 }
 
@@ -9,92 +28,254 @@ package "application.eventhandlers" {
   class TrackingApplicationReadyEventHandler
 }
 
+package "application.internal.eventhandlers" {
+  class LocationRecordedEventHandler
+  class MeasurementRecordedEventHandler
+}
+
 package "application.internal.queryservices" {
+  class DeviceQueryServiceImpl
   class MeasurementQueryServiceImpl
 }
 
 package "domain.model.aggregates" {
-  class Measurement {
-    +MeasurementId id
-    +DeviceId deviceId
+  class Device {
+    +MacAddress macAddress
     +ResidentId residentId
-    +Instant recordedAt
-    +Temperature temperature
-    +HeartRate heartRate
-    +RespiratoryRate respiratoryRate
-    +OxygenSaturation oxygenSaturation
-    +BloodPressure bloodPressure
+    +NursingHomeId nursingHomeId
+    +String externalDeviceId
+    +LocalDateTime assignedAt
+    +AssignmentStatus status
+    +IotStatus iotStatus
+    +DeviceType deviceType
+  }
+  class Location <<MongoDB document "locations">> {
+    +Long deviceId
+    +Coordinates coordinates
+    +LocalDateTime recordedAt
+  }
+  class Measurement <<MongoDB document "measurements">> {
+    +DeviceId deviceId
+    +LocalDateTime timestamp
+    +Integer heartRate
+    +Double temperature
+    +Double ambientTemperature
+    +Integer oxygenSaturation
+    +Boolean clinicalRecord
   }
 }
 
 package "domain.model.commands" {
+  class AssignDeviceCommand
+  class ChangeDeviceStatusCommand
+  class ChangeIotStatusCommand
+  class RecordEdgeMeasurementCommand
+  class RecordLocationCommand
+  class RegisterDeviceCommand
   class SeedMeasurementCommand
-  class CreateMeasurementCommand
+  class UnassignDeviceCommand
+  class UpdateDeviceCommand
+}
+
+package "domain.model.events" {
+  class LocationRecordedEvent
+  class MeasurementRecordedEvent
 }
 
 package "domain.model.queries" {
-  class GetAllMeasurementQuery
-  class GetMeasurementsByResidentQuery
+  class GetDeviceByIdQuery
+  class GetDevicesByNursingHomeIdQuery
+  class GetDevicesByResidentIdQuery
+  class GetEdgeRegistryDeltaQuery
+  class GetMeasurementsByDeviceIdQuery
+  class GetUnassignedDevicesQuery
 }
 
 package "domain.model.valueobjects" {
+  class AssignmentStatus
+  class Coordinates
   class DeviceId
+  class DeviceType
+  class HeartRate
+  class IotStatus
+  class MacAddress
+  class NursingHomeId
+  class OxygenSaturation
   class ResidentId
   class Temperature
-  class HeartRate
-  class RespiratoryRate
-  class OxygenSaturation
-  class BloodPressure
 }
 
 package "domain.services" {
+  interface DeviceCommandService
+  interface DeviceQueryService
+  interface LocationCommandService
   interface MeasurementCommandService
   interface MeasurementQueryService
 }
 
 package "infrastructure.persistence.jpa.repositories" {
+  interface DeviceRepository
+}
+
+package "infrastructure.persistence.mongodb.repositories" {
+  interface LocationRepository
   interface MeasurementRepository
 }
 
+package "infrastructure.authorization" {
+  class EdgeGatewayAuthFilter
+  class EdgeGatewayAuthentication
+  class EdgeGatewayPrincipal
+  class MacAddressNormalizer
+}
+
+package "interfaces.acl" {
+  interface TrackingContextFacade
+}
+
 package "interfaces.rest" {
+  class DevicesController
+  class EdgeRegistryController
+  class LocationsController
   class MeasurementsController
+  class NursingHomesDevicesController
+  class ResidentDeviceController
+
   package "resources" {
+    class AssignDeviceResource
+    class ChangeDeviceStatusResource
+    class ChangeIotStatusResource
+    class DeviceResource
+    class DevicesListResource
+    class EdgeRegistryDeviceResource
+    class EdgeRegistryResponse
+    class LocationResource
     class MeasurementResource
+    class RecordLocationResource
+    class RegisterDeviceResource
   }
+
   package "transform" {
+    class AssignDeviceCommandFromResourceAssembler
+    class DeviceResourceFromEntityAssembler
+    class EdgeRegistryDeviceResourceFromEntityAssembler
+    class LocationResourceFromEntityAssembler
     class MeasurementResourceFromEntityAssembler
+    class RecordLocationCommandFromResourceAssembler
+    class RegisterDeviceCommandFromResourceAssembler
+    class UpdateDeviceCommandFromResourceAssembler
   }
 }
 
 ' Relationships
-Measurement *-- DeviceId
-Measurement *-- ResidentId
-Measurement *-- Temperature
-Measurement *-- HeartRate
-Measurement *-- RespiratoryRate
-Measurement *-- OxygenSaturation
-Measurement *-- BloodPressure
+Device *-- MacAddress
+Device *-- ResidentId
+Device *-- NursingHomeId
+Device *-- AssignmentStatus
+Device *-- IotStatus
+Device *-- DeviceType
 
+Location *-- Coordinates
+Location --> DeviceId : "deviceId (plain Long)"
+
+Measurement *-- DeviceId
+Measurement *-- HeartRate
+Measurement *-- Temperature
+Measurement *-- OxygenSaturation
+
+DeviceRepository <|.. DeviceCommandServiceImpl
+DeviceRepository <|.. DeviceQueryServiceImpl
+LocationRepository <|.. LocationCommandServiceImpl
 MeasurementRepository <|.. MeasurementCommandServiceImpl
 MeasurementRepository <|.. MeasurementQueryServiceImpl
 
+DeviceCommandService <|.. DeviceCommandServiceImpl
+DeviceQueryService <|.. DeviceQueryServiceImpl
+LocationCommandService <|.. LocationCommandServiceImpl
 MeasurementCommandService <|.. MeasurementCommandServiceImpl
 MeasurementQueryService <|.. MeasurementQueryServiceImpl
 
+DeviceCommandServiceImpl --> DeviceRepository : uses
+DeviceQueryServiceImpl --> DeviceRepository : uses
+LocationCommandServiceImpl --> LocationRepository : uses
+LocationCommandServiceImpl --> DeviceRepository : validates device exists
 MeasurementCommandServiceImpl --> MeasurementRepository : uses
 MeasurementQueryServiceImpl --> MeasurementRepository : uses
 
-MeasurementsController --> MeasurementCommandService : uses
-MeasurementsController --> MeasurementQueryService : uses
+DevicesController --> DeviceCommandService : uses
+DevicesController --> DeviceQueryService : uses
+DevicesController --> MeasurementQueryService : uses
+DevicesController --> DeviceResourceFromEntityAssembler
+DevicesController --> MeasurementResourceFromEntityAssembler
 
-MeasurementResourceFromEntityAssembler --> Measurement : reads
-MeasurementResource --> MeasurementResourceFromEntityAssembler
+NursingHomesDevicesController --> DeviceCommandService : uses
+NursingHomesDevicesController --> DeviceQueryService : uses
+NursingHomesDevicesController --> RegisterDeviceCommandFromResourceAssembler
+NursingHomesDevicesController --> DevicesListResource
 
+ResidentDeviceController --> DeviceQueryService : uses
+
+LocationsController --> LocationCommandService : uses
+LocationsController --> RecordLocationCommandFromResourceAssembler
+LocationsController --> LocationResourceFromEntityAssembler
+
+MeasurementsController --> MeasurementCommandServiceImpl : uses
+
+EdgeRegistryController --> DeviceQueryService : uses
+EdgeRegistryController --> EdgeGatewayAuthentication : requires
+EdgeRegistryController --> EdgeRegistryDeviceResourceFromEntityAssembler
+EdgeRegistryController --> EdgeRegistryResponse
+
+RegisterDeviceCommand --> DeviceCommandService : execute
+UpdateDeviceCommand --> DeviceCommandService : execute
+AssignDeviceCommand --> DeviceCommandService : execute
+UnassignDeviceCommand --> DeviceCommandService : execute
+ChangeDeviceStatusCommand --> DeviceCommandService : execute
+ChangeIotStatusCommand --> DeviceCommandService : execute
+RecordLocationCommand --> LocationCommandService : execute
 SeedMeasurementCommand --> MeasurementCommandService : execute
-CreateMeasurementCommand --> MeasurementCommandService : execute
+RecordEdgeMeasurementCommand --> MeasurementCommandService : execute
 
-GetAllMeasurementQuery --> MeasurementQueryService : execute
-GetMeasurementsByResidentQuery --> MeasurementQueryService : execute
+GetDeviceByIdQuery --> DeviceQueryService : execute
+GetDevicesByNursingHomeIdQuery --> DeviceQueryService : execute
+GetDevicesByResidentIdQuery --> DeviceQueryService : execute
+GetUnassignedDevicesQuery --> DeviceQueryService : execute
+GetEdgeRegistryDeltaQuery --> DeviceQueryService : execute
+GetMeasurementsByDeviceIdQuery --> MeasurementQueryService : execute
+
+' Domain events (real-time broadcast over WebSocket/STOMP)
+Location --> LocationRecordedEvent : raises
+LocationRecordedEventHandler --> LocationRecordedEvent : listens
+Measurement --> MeasurementRecordedEvent : raises (when clinicalRecord)
+MeasurementRecordedEventHandler --> MeasurementRecordedEvent : listens
+
+' Edge gateway authentication (IoT devices calling in by MAC address)
+EdgeGatewayAuthFilter --> DeviceRepository : findByExternalDeviceIdAndMacAddress
+EdgeGatewayAuthFilter --> MacAddressNormalizer : uses
+EdgeGatewayAuthFilter --> EdgeGatewayAuthentication : creates
+EdgeGatewayAuthentication --> EdgeGatewayPrincipal : carries
+
+' ACL facade
+TrackingContextFacadeImpl ..|> TrackingContextFacade
+TrackingContextFacadeImpl --> DeviceQueryService : delegates
+
+' Resources and assemblers
+DeviceResourceFromEntityAssembler --> Device
+DeviceResourceFromEntityAssembler --> DeviceResource
+RegisterDeviceCommandFromResourceAssembler --> RegisterDeviceResource
+RegisterDeviceCommandFromResourceAssembler --> RegisterDeviceCommand
+UpdateDeviceCommandFromResourceAssembler --> RegisterDeviceResource
+UpdateDeviceCommandFromResourceAssembler --> UpdateDeviceCommand
+AssignDeviceCommandFromResourceAssembler --> AssignDeviceResource
+AssignDeviceCommandFromResourceAssembler --> AssignDeviceCommand
+LocationResourceFromEntityAssembler --> Location
+LocationResourceFromEntityAssembler --> LocationResource
+RecordLocationCommandFromResourceAssembler --> RecordLocationResource
+RecordLocationCommandFromResourceAssembler --> RecordLocationCommand
+MeasurementResourceFromEntityAssembler --> Measurement
+MeasurementResourceFromEntityAssembler --> MeasurementResource
+EdgeRegistryDeviceResourceFromEntityAssembler --> Device
+EdgeRegistryDeviceResourceFromEntityAssembler --> EdgeRegistryDeviceResource
 
 TrackingApplicationReadyEventHandler --> MeasurementCommandServiceImpl : uses
 
