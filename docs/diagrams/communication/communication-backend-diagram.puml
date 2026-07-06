@@ -1,9 +1,12 @@
 @startuml
-' === OPTIMIZACIONES DE DISEÑO ===
+' Bounded Context: communication
+' Compact view: aggregates, services, repositories, controllers.
+' Individual commands/queries/resources/assemblers are omitted for readability.
+
 left to right direction
 skinparam linetype ortho
-skinparam nodesep 40
-skinparam ranksep 60
+skinparam nodesep 30
+skinparam ranksep 50
 skinparam shadowing false
 skinparam packageStyle rectangle
 skinparam class {
@@ -11,8 +14,6 @@ skinparam class {
   ArrowColor #444444
   BorderColor #333333
 }
-
-' Bounded Context: communication
 
 package "domain.model.aggregates" {
   class Conversation {
@@ -50,42 +51,6 @@ package "domain.model.entities" {
   }
 }
 
-package "domain.model.valueobjects" {
-  enum ConversationStatus
-  enum ConversationType
-  class EmailRecipients
-  class MessageContent
-  enum NotificationStatus
-  enum PushPlatform
-}
-
-package "domain.model.commands" {
-  class CreateConversationCommand
-  class CreateUserNotificationCommand
-  class MarkAllNotificationsAsReadCommand
-  class MarkConversationAsReadCommand
-  class MarkNotificationAsReadCommand
-  class RegisterUserPushTokenCommand
-  class SendHtmlEmailCommand
-  class SendMessageCommand
-  class SendPlainEmailCommand
-  class SendPushNotificationCommand
-  class SendPushNotificationToUserCommand
-  class SendRenderedTemplateEmailCommand
-  class SendTemplateEmailCommand
-  class UnregisterUserPushTokenCommand
-}
-
-package "domain.model.queries" {
-  class GetConversationByIdQuery
-  class GetConversationMessagesQuery
-  class GetConversationsByUserQuery
-  class GetUnreadConversationCountQuery
-  class GetUnreadNotificationCountQuery
-  class GetUserNotificationsQuery
-  class GetUserPushTokensQuery
-}
-
 package "domain.model.events" {
   class MessageSentEvent
 }
@@ -103,19 +68,16 @@ package "domain.services" {
   interface UserPushTokenQueryService
 }
 
-package "application.internal.commandservices" {
+package "application.internal (command/query services)" {
   class ConversationCommandServiceImpl
+  class ConversationQueryServiceImpl
   class EmailNotificationCommandServiceImpl
   class MessageCommandServiceImpl
+  class MessageQueryServiceImpl
   class PushNotificationCommandServiceImpl
   class UserNotificationCommandServiceImpl
-  class UserPushTokenCommandServiceImpl
-}
-
-package "application.internal.queryservices" {
-  class ConversationQueryServiceImpl
-  class MessageQueryServiceImpl
   class UserNotificationQueryServiceImpl
+  class UserPushTokenCommandServiceImpl
   class UserPushTokenQueryServiceImpl
 }
 
@@ -123,29 +85,10 @@ package "application.internal.eventhandlers" {
   class MessageBroadcastEventHandler
 }
 
-package "application.internal.outboundservices.acl" {
+package "application.internal.outboundservices" {
   class ExternalIamService
-}
-
-package "application.internal.outboundservices.fcm" {
   interface FirebaseMessagingGateway
-}
-
-package "application.internal.outboundservices.sendgrid" {
   interface SendGridGateway
-}
-
-package "infrastructure.providers.fcm.services" {
-  class FirebaseMessagingGatewayImpl
-}
-
-package "infrastructure.providers.sendgrid.services" {
-  class SendGridGatewayImpl
-}
-
-package "infrastructure.providers.stub" {
-  class DevFirebaseMessagingGatewayStub
-  class DevSendGridGatewayStub
 }
 
 package "infrastructure.persistence.jpa.repositories" {
@@ -155,12 +98,9 @@ package "infrastructure.persistence.jpa.repositories" {
   interface UserPushTokenRepository
 }
 
-package "application.acl" {
-  class CommunicationContextFacadeImpl <<implements CommunicationContextFacade>>
-}
-
-package "interfaces.acl" {
+package "application.acl / interfaces.acl" {
   interface CommunicationContextFacade
+  class CommunicationContextFacadeImpl
 }
 
 package "interfaces.rest" {
@@ -171,34 +111,11 @@ package "interfaces.rest" {
   class UserConversationsController
   class UserNotificationsController
   class UserPushTokensController
-
-  package "resources" {
-    class ChatMessageResource
-    class ConversationResource
-    class ConversationSummaryResource
-    class CreateConversationResource
-    class SendMessageResource
-    class UserNotificationResource
-    class UserPushTokenResource
-  }
-
-  package "transform" {
-    class ChatMessageAssembler
-    class ConversationAssembler
-    class UserNotificationAssembler
-    class UserPushTokenAssembler
-  }
 }
-
-' === RELACIONES ===
 
 ' Aggregate composition
 Conversation *-- ConversationParticipant : "1..*"
-Conversation .. ConversationStatus
-Conversation .. ConversationType
-Message .. MessageContent
-UserNotification .. NotificationStatus
-UserPushToken .. PushPlatform
+Message --> MessageSentEvent : raises
 
 ' Repositories -> Aggregates
 ConversationRepository --> Conversation
@@ -219,90 +136,43 @@ UserPushTokenCommandService <|.. UserPushTokenCommandServiceImpl
 UserPushTokenQueryService <|.. UserPushTokenQueryServiceImpl
 
 ' Implementations use repositories
-ConversationCommandServiceImpl --> ConversationRepository : uses
-ConversationQueryServiceImpl --> ConversationRepository : uses
-MessageCommandServiceImpl --> MessageRepository : uses
-MessageQueryServiceImpl --> MessageRepository : uses
-UserNotificationCommandServiceImpl --> UserNotificationRepository : uses
-UserNotificationQueryServiceImpl --> UserNotificationRepository : uses
-UserPushTokenCommandServiceImpl --> UserPushTokenRepository : uses
-UserPushTokenQueryServiceImpl --> UserPushTokenRepository : uses
+ConversationCommandServiceImpl --> ConversationRepository
+ConversationQueryServiceImpl --> ConversationRepository
+MessageCommandServiceImpl --> MessageRepository
+MessageQueryServiceImpl --> MessageRepository
+UserNotificationCommandServiceImpl --> UserNotificationRepository
+UserNotificationQueryServiceImpl --> UserNotificationRepository
+UserPushTokenCommandServiceImpl --> UserPushTokenRepository
+UserPushTokenQueryServiceImpl --> UserPushTokenRepository
 
 ' Gateways used by command services
-EmailNotificationCommandServiceImpl --> SendGridGateway : uses
-PushNotificationCommandServiceImpl --> FirebaseMessagingGateway : uses
-UserPushTokenCommandServiceImpl --> ExternalIamService : uses
-
-FirebaseMessagingGateway <|.. FirebaseMessagingGatewayImpl
-FirebaseMessagingGateway <|.. DevFirebaseMessagingGatewayStub
-SendGridGateway <|.. SendGridGatewayImpl
-SendGridGateway <|.. DevSendGridGatewayStub
-
-' Commands/Queries -> Services
-CreateConversationCommand --> ConversationCommandService : execute
-MarkConversationAsReadCommand --> ConversationCommandService : execute
-SendMessageCommand --> MessageCommandService : execute
-CreateUserNotificationCommand --> UserNotificationCommandService : execute
-MarkNotificationAsReadCommand --> UserNotificationCommandService : execute
-MarkAllNotificationsAsReadCommand --> UserNotificationCommandService : execute
-RegisterUserPushTokenCommand --> UserPushTokenCommandService : execute
-UnregisterUserPushTokenCommand --> UserPushTokenCommandService : execute
-SendPlainEmailCommand --> EmailNotificationCommandService : execute
-SendHtmlEmailCommand --> EmailNotificationCommandService : execute
-SendTemplateEmailCommand --> EmailNotificationCommandService : execute
-SendRenderedTemplateEmailCommand --> EmailNotificationCommandService : execute
-SendPushNotificationCommand --> PushNotificationCommandService : execute
-SendPushNotificationToUserCommand --> PushNotificationCommandService : execute
-
-GetConversationByIdQuery --> ConversationQueryService : execute
-GetConversationsByUserQuery --> ConversationQueryService : execute
-GetUnreadConversationCountQuery --> ConversationQueryService : execute
-GetConversationMessagesQuery --> MessageQueryService : execute
-GetUserNotificationsQuery --> UserNotificationQueryService : execute
-GetUnreadNotificationCountQuery --> UserNotificationQueryService : execute
-GetUserPushTokensQuery --> UserPushTokenQueryService : execute
+EmailNotificationCommandServiceImpl --> SendGridGateway
+PushNotificationCommandServiceImpl --> FirebaseMessagingGateway
+UserPushTokenCommandServiceImpl --> ExternalIamService
 
 ' Domain event flow (real-time chat broadcast)
-Message --> MessageSentEvent : raises
 MessageBroadcastEventHandler --> MessageSentEvent : listens (AFTER_COMMIT)
-MessageBroadcastEventHandler --> ChatMessageAssembler : uses
 
 ' ACL facade
 CommunicationContextFacadeImpl ..|> CommunicationContextFacade
-CommunicationContextFacadeImpl --> EmailNotificationCommandService : delegates
-CommunicationContextFacadeImpl --> PushNotificationCommandService : delegates
-CommunicationContextFacadeImpl --> UserPushTokenCommandService : delegates
-CommunicationContextFacadeImpl --> UserNotificationCommandService : delegates
-CommunicationContextFacadeImpl --> ConversationCommandService : delegates
+CommunicationContextFacadeImpl --> ConversationCommandService
+CommunicationContextFacadeImpl --> EmailNotificationCommandService
+CommunicationContextFacadeImpl --> PushNotificationCommandService
+CommunicationContextFacadeImpl --> UserPushTokenCommandService
+CommunicationContextFacadeImpl --> UserNotificationCommandService
 
 ' Controllers use services
-ConversationsController --> ConversationCommandService : uses
-ConversationsController --> ConversationQueryService : uses
-ConversationsController --> ConversationAssembler : uses
-ConversationMessagesController --> MessageCommandService : uses
-ConversationMessagesController --> MessageQueryService : uses
-ConversationMessagesController --> ChatMessageAssembler : uses
-UserConversationsController --> ConversationQueryService : uses
-UserConversationsController --> ConversationCommandService : uses
-UserNotificationsController --> UserNotificationCommandService : uses
-UserNotificationsController --> UserNotificationQueryService : uses
-UserNotificationsController --> UserNotificationAssembler : uses
-UserPushTokensController --> UserPushTokenCommandService : uses
-UserPushTokensController --> UserPushTokenQueryService : uses
-UserPushTokensController --> UserPushTokenAssembler : uses
-EmailNotificationsController --> EmailNotificationCommandService : uses
-PushNotificationsController --> PushNotificationCommandService : uses
-PushNotificationsController --> UserPushTokenAssembler : uses
-
-' Resources and assemblers
-ConversationAssembler --> Conversation
-ConversationAssembler --> ConversationResource
-ConversationAssembler --> ConversationSummaryResource
-ChatMessageAssembler --> Message
-ChatMessageAssembler --> ChatMessageResource
-UserNotificationAssembler --> UserNotification
-UserNotificationAssembler --> UserNotificationResource
-UserPushTokenAssembler --> UserPushToken
-UserPushTokenAssembler --> UserPushTokenResource
+ConversationsController --> ConversationCommandService
+ConversationsController --> ConversationQueryService
+ConversationMessagesController --> MessageCommandService
+ConversationMessagesController --> MessageQueryService
+UserConversationsController --> ConversationQueryService
+UserConversationsController --> ConversationCommandService
+UserNotificationsController --> UserNotificationCommandService
+UserNotificationsController --> UserNotificationQueryService
+UserPushTokensController --> UserPushTokenCommandService
+UserPushTokensController --> UserPushTokenQueryService
+EmailNotificationsController --> EmailNotificationCommandService
+PushNotificationsController --> PushNotificationCommandService
 
 @enduml
