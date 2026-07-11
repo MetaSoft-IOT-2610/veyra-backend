@@ -1,6 +1,7 @@
 package com.metasoft.veyra.platform.tracking.interfaces.rest;
 
 import com.metasoft.veyra.platform.tracking.domain.services.LocationCommandService;
+import com.metasoft.veyra.platform.tracking.infrastructure.authorization.EdgeGatewayAuthentication;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.LocationResource;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.resources.RecordLocationResource;
 import com.metasoft.veyra.platform.tracking.interfaces.rest.transform.LocationResourceFromEntityAssembler;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -27,17 +29,38 @@ public class LocationsController {
         this.locationCommandService = locationCommandService;
     }
 
-    @PostMapping
+    @PostMapping(consumes = APPLICATION_JSON_VALUE)
     @Operation(summary = "Record a GPS location for a device")
-    @ApiResponses(value ={ @ApiResponse(responseCode = "201" ,description = "record location"),@ApiResponse(responseCode = "400" , description = "bad request")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "record location"),
+            @ApiResponse(responseCode = "400", description = "bad request"),
+            @ApiResponse(responseCode = "401", description = "unauthorized"),
+            @ApiResponse(responseCode = "403", description = "forbidden"),
+            @ApiResponse(responseCode = "404", description = "device not found")
+    })
     public ResponseEntity<LocationResource> recordLocation(@Valid @RequestBody RecordLocationResource resource) {
-        var command = RecordLocationCommandFromResourceAssembler.toCommandFromResource(resource);
-        var location = locationCommandService.handle(command);
-        if (location.isEmpty()){
-            return ResponseEntity.badRequest().build();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof EdgeGatewayAuthentication edgeAuthentication)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var  locationEntity=location.get();
-        var locationResource= LocationResourceFromEntityAssembler.toResourceFromEntity(locationEntity);
-        return new ResponseEntity<>(locationResource,HttpStatus.CREATED);
+
+        var command = RecordLocationCommandFromResourceAssembler.toCommandFromResource(
+                resource,
+                edgeAuthentication.getPrincipal().nursingHomeId()
+        );
+
+        try {
+            var location = locationCommandService.handle(command);
+            if (location.isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+            var locationEntity = location.get();
+            var locationResource = LocationResourceFromEntityAssembler.toResourceFromEntity(locationEntity);
+            return new ResponseEntity<>(locationResource, HttpStatus.CREATED);
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 }

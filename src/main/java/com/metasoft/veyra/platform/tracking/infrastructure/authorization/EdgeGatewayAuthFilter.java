@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 /**
  * Authenticates on-premise edge gateways via {@code X-Device-Id} + {@code X-Device-Mac}.
@@ -23,6 +24,12 @@ public class EdgeGatewayAuthFilter extends OncePerRequestFilter {
 
     public static final String HEADER_DEVICE_ID = "X-Device-Id";
     public static final String HEADER_DEVICE_MAC = "X-Device-Mac";
+
+    // Endpoints that the edge gateway is allowed to POST directly to, protected by these headers.
+    private static final Set<String> EDGE_INGESTION_PATHS = Set.of(
+            "/api/v1/measurements",
+            "/api/v1/locations"
+    );
 
     private final DeviceRepository deviceRepository;
 
@@ -37,7 +44,7 @@ public class EdgeGatewayAuthFilter extends OncePerRequestFilter {
             return false;
         }
         if ("POST".equalsIgnoreCase(request.getMethod())
-                && "/api/v1/measurements".equals(path)
+                && EDGE_INGESTION_PATHS.contains(path)
                 && request.getHeader(HEADER_DEVICE_ID) != null) {
             return false;
         }

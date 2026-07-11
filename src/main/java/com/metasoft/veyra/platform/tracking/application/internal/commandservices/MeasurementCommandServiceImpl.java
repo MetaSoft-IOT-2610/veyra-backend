@@ -2,11 +2,9 @@ package com.metasoft.veyra.platform.tracking.application.internal.commandservice
 
 import com.metasoft.veyra.platform.tracking.domain.model.aggregates.Measurement;
 import com.metasoft.veyra.platform.tracking.domain.model.commands.RecordEdgeMeasurementCommand;
-import com.metasoft.veyra.platform.tracking.domain.model.commands.RecordLocationCommand;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.DeviceType;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.IotStatus;
 import com.metasoft.veyra.platform.tracking.domain.model.valueobjects.MacAddress;
-import com.metasoft.veyra.platform.tracking.domain.services.LocationCommandService;
 import com.metasoft.veyra.platform.tracking.domain.services.MeasurementCommandService;
 import com.metasoft.veyra.platform.tracking.infrastructure.persistence.jpa.repositories.DeviceRepository;
 import com.metasoft.veyra.platform.tracking.infrastructure.persistence.mongodb.repositories.MeasurementRepository;
@@ -19,15 +17,12 @@ public class MeasurementCommandServiceImpl implements MeasurementCommandService 
 
     private final MeasurementRepository measurementRepository;
     private final DeviceRepository deviceRepository;
-    private final LocationCommandService locationCommandService;
 
     public MeasurementCommandServiceImpl(
             MeasurementRepository measurementRepository,
-            DeviceRepository deviceRepository,
-            LocationCommandService locationCommandService) {
+            DeviceRepository deviceRepository) {
         this.measurementRepository = measurementRepository;
         this.deviceRepository = deviceRepository;
-        this.locationCommandService = locationCommandService;
     }
 
     @Override
@@ -58,15 +53,6 @@ public class MeasurementCommandServiceImpl implements MeasurementCommandService 
                 command.oxygenSaturation(),
                 command.clinicalRecord());
         var saved = measurementRepository.save(measurement);
-
-        if (command.latitude() != null && command.longitude() != null) {
-            locationCommandService.handle(new RecordLocationCommand(
-                    node.getId(),
-                    command.latitude(),
-                    command.longitude()
-            ));
-        }
-
         return Optional.of(saved);
     }
 }
