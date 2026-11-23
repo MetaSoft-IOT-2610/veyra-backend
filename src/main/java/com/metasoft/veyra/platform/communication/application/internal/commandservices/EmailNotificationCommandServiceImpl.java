@@ -1,6 +1,6 @@
 package com.metasoft.veyra.platform.communication.application.internal.commandservices;
 
-import com.metasoft.veyra.platform.communication.application.internal.outboundservices.sendgrid.SendGridGateway;
+import com.metasoft.veyra.platform.communication.application.internal.outboundservices.email.EmailGateway;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendHtmlEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPlainEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendRenderedTemplateEmailCommand;
@@ -12,33 +12,33 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailNotificationCommandServiceImpl implements EmailNotificationCommandService {
 
-    private final SendGridGateway sendGridGateway;
+    private final EmailGateway emailGateway;
     private final EmailTemplateRenderer emailTemplateRenderer;
 
-    public EmailNotificationCommandServiceImpl(SendGridGateway sendGridGateway, EmailTemplateRenderer emailTemplateRenderer) {
-        this.sendGridGateway = sendGridGateway;
+    public EmailNotificationCommandServiceImpl(EmailGateway emailGateway, EmailTemplateRenderer emailTemplateRenderer) {
+        this.emailGateway = emailGateway;
         this.emailTemplateRenderer = emailTemplateRenderer;
     }
 
     @Override
     public void handle(SendPlainEmailCommand command) {
-        sendGridGateway.sendPlain(command);
+        emailGateway.sendPlain(command);
     }
 
     @Override
     public void handle(SendHtmlEmailCommand command) {
-        sendGridGateway.sendHtml(command);
+        emailGateway.sendHtml(command);
     }
 
     @Override
     public void handle(SendTemplateEmailCommand command) {
-        sendGridGateway.sendTemplate(command);
+        emailGateway.sendTemplate(command);
     }
 
     @Override
     public void handle(SendRenderedTemplateEmailCommand command) {
         String htmlContent = emailTemplateRenderer.render(command.template(), command.variables());
-        sendGridGateway.sendHtml(new SendHtmlEmailCommand(
+        emailGateway.sendHtml(new SendHtmlEmailCommand(
                 command.recipients(),
                 command.subject(),
                 htmlContent,

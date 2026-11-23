@@ -1,6 +1,6 @@
 package com.metasoft.veyra.platform.communication.infrastructure.providers.stub;
 
-import com.metasoft.veyra.platform.communication.application.internal.outboundservices.sendgrid.SendGridGateway;
+import com.metasoft.veyra.platform.communication.application.internal.outboundservices.email.EmailGateway;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendHtmlEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPlainEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendTemplateEmailCommand;
@@ -10,24 +10,24 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@ConditionalOnProperty(name = "integrations.sendgrid.enabled", havingValue = "false")
-public class DevSendGridGatewayStub implements SendGridGateway {
+@ConditionalOnProperty(name = "integrations.resend.enabled", havingValue = "false")
+public class DevEmailGatewayStub implements EmailGateway {
 
     @Override
     public void sendPlain(SendPlainEmailCommand command) {
-        log.info("SendGrid integration disabled. Plain email not sent (recipientCount={}, subject={})",
+        log.info("Resend integration disabled. Plain email not sent (recipientCount={}, subject={})",
                 command.recipients().values().size(), command.subject());
     }
 
     @Override
     public void sendHtml(SendHtmlEmailCommand command) {
-        log.info("SendGrid integration disabled. HTML email not sent (recipientCount={}, subject={})",
+        log.info("Resend integration disabled. HTML email not sent (recipientCount={}, subject={})",
                 command.recipients().values().size(), command.subject());
     }
 
     @Override
     public void sendTemplate(SendTemplateEmailCommand command) {
-        log.info("SendGrid integration disabled. Template email not sent (recipientCount={}, templateId={})",
+        log.info("Resend integration disabled. Template email not sent (recipientCount={}, templateId={})",
                 command.recipients().values().size(), command.templateId());
     }
 }

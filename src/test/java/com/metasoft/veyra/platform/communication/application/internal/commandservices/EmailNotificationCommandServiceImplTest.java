@@ -1,6 +1,6 @@
 package com.metasoft.veyra.platform.communication.application.internal.commandservices;
 
-import com.metasoft.veyra.platform.communication.application.internal.outboundservices.sendgrid.SendGridGateway;
+import com.metasoft.veyra.platform.communication.application.internal.outboundservices.email.EmailGateway;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendHtmlEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPlainEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendTemplateEmailCommand;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 class EmailNotificationCommandServiceImplTest {
 
     @Mock
-    private SendGridGateway sendGridGateway;
+    private EmailGateway emailGateway;
 
     @InjectMocks
     private EmailNotificationCommandServiceImpl emailNotificationCommandService;
@@ -35,7 +35,7 @@ class EmailNotificationCommandServiceImplTest {
 
         emailNotificationCommandService.handle(command);
 
-        verify(sendGridGateway).sendPlain(command);
+        verify(emailGateway).sendPlain(command);
     }
 
     @Test
@@ -49,7 +49,7 @@ class EmailNotificationCommandServiceImplTest {
 
         emailNotificationCommandService.handle(command);
 
-        verify(sendGridGateway).sendHtml(command);
+        verify(emailGateway).sendHtml(command);
     }
 
     @Test
@@ -62,6 +62,6 @@ class EmailNotificationCommandServiceImplTest {
 
         emailNotificationCommandService.handle(command);
 
-        verify(sendGridGateway).sendTemplate(command);
+        verify(emailGateway).sendTemplate(command);
     }
 }

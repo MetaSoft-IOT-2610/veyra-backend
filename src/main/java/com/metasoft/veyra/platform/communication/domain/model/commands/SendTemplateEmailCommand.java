@@ -11,7 +11,7 @@ public record SendTemplateEmailCommand(
 ) {
     public SendTemplateEmailCommand {
         if (templateId == null || templateId.isBlank()) {
-            throw new IllegalArgumentException("SendGrid template id cannot be null or blank");
+            throw new IllegalArgumentException("Template id cannot be null or blank");
         }
         dynamicTemplateData = dynamicTemplateData == null ? Map.of() : Map.copyOf(dynamicTemplateData);
     }

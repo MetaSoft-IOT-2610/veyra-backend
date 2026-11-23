@@ -70,7 +70,7 @@ public class EmailNotificationsController {
     }
 
     @PostMapping("/templates")
-    @Operation(summary = "Send template email", description = "Send a SendGrid dynamic template email to one or more recipients.")
+    @Operation(summary = "Send template email", description = "Send a Resend template email to one or more recipients.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = "Email accepted for delivery"),
             @ApiResponse(responseCode = "400", description = "Bad request"),

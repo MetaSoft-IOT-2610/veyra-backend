@@ -1,10 +1,10 @@
-package com.metasoft.veyra.platform.communication.application.internal.outboundservices.sendgrid;
+package com.metasoft.veyra.platform.communication.application.internal.outboundservices.email;
 
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendHtmlEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendPlainEmailCommand;
 import com.metasoft.veyra.platform.communication.domain.model.commands.SendTemplateEmailCommand;
 
-public interface SendGridGateway {
+public interface EmailGateway {
     void sendPlain(SendPlainEmailCommand command);
 
     void sendHtml(SendHtmlEmailCommand command);
